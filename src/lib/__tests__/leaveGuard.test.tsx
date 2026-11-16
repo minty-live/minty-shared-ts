@@ -181,6 +181,19 @@ describe("the links that are never held", () => {
   });
 });
 
+describe("the browser's own prompt", () => {
+  it("is never armed: a dirty page adds no beforeunload listener (owner, 2026-11-16)", () => {
+    const added = vi.spyOn(window, "addEventListener");
+    try {
+      render(<Harness dirty />);
+      // eslint-disable-next-line no-restricted-syntax -- the test proves the listener is absent
+      expect(added.mock.calls.map(([type]) => type)).not.toContain("beforeunload");
+    } finally {
+      added.mockRestore();
+    }
+  });
+});
+
 describe("a clean page", () => {
   it("holds nothing at all", async () => {
     render(<Harness dirty={false} />);

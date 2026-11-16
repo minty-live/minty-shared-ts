@@ -20,10 +20,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
  * `onClose` never see it) - and the dialog opens. "Discard changes" puts the ticks back, then
  * replays the click on the same link, so each link keeps its own way of going (a soft move, a
  * full load, the drawer closing); "Go Back", Escape and the backdrop only close the dialog. A
- * reload, a typed address or a tab closed get the browser's own prompt (`beforeunload`).
+ * reload, a typed address or a tab closed leave WITHOUT asking: the only prompt a browser allows
+ * there is its own "Leave site?", and Minty shows no native browser dialog (owner, 2026-11-16).
  * `guardLeave(proceed)` is the same question for an exit that is not a link (Logout).
  *
- * Back and Forward are soft navigations (no click, no `beforeunload`), so the page holds them with
+ * Back and Forward are soft navigations (no click, no unload), so the page holds them with
  * a SENTINEL: when it turns dirty it pushes one history entry at its own address (Next's state
  * object kept, so the router has nothing to do). Back then only pops the sentinel - a `popstate`
  * caught on `window` in the CAPTURE phase, which at the target runs before the app router's own
@@ -40,7 +41,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
  * `history.go(n)` (its own pop, swallowed like the one above) and asks. "Discard changes" then
  * takes the sentinel off and goes the rest of the way (`history.go(-(n - 1))`). The index, not
  * the address, decides what a pop was: an earlier entry at this same address is a jump, not the
- * sentinel. A jump to another document's entry unloads the page and gets `beforeunload`. Where
+ * sentinel. A jump to another document's entry unloads the page without asking. Where
  * the browser has no Navigation API, a several-entry jump still leaves without asking (warned once
  * in the console).
  */
@@ -119,8 +120,6 @@ export function useLeaveGuard(dirty: boolean, reset: () => void): LeaveGuard {
   const resetRef = useRef(reset);
   /** What "Discard changes" goes on with. */
   const pending = useRef<(() => void) | null>(null);
-  /** The live `beforeunload` listener, removed before a discard leaves. */
-  const unload = useRef<((e: BeforeUnloadEvent) => void) | null>(null);
   /** The address the sentinel entry sits at, while it is the top history entry; else null. */
   const sentinel = useRef<string | null>(null);
   /** The sentinel entry's history index (Navigation API), or null where the browser has none. */
@@ -255,18 +254,8 @@ export function useLeaveGuard(dirty: boolean, reset: () => void): LeaveGuard {
       };
       setOpen(true);
     };
-    const onBeforeUnload = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
-      e.returnValue = "";
-    };
     window.addEventListener("click", onClick, true);
-    window.addEventListener("beforeunload", onBeforeUnload);
-    unload.current = onBeforeUnload;
-    return () => {
-      window.removeEventListener("click", onClick, true);
-      window.removeEventListener("beforeunload", onBeforeUnload);
-      unload.current = null;
-    };
+    return () => window.removeEventListener("click", onClick, true);
   }, [dirty]);
 
   // Escape answers the dialog alone: caught on the way down, before ModalFrame's and the sidebar
@@ -290,11 +279,6 @@ export function useLeaveGuard(dirty: boolean, reset: () => void): LeaveGuard {
     pending.current = null;
     setOpen(false);
     resetRef.current();
-    // first, or the browser's own prompt follows ours
-    if (unload.current) {
-      window.removeEventListener("beforeunload", unload.current);
-      unload.current = null;
-    }
     // the sentinel off first, so Back from wherever this goes lands on the page once
     dropSentinel(proceed ?? undefined);
   }, [dropSentinel]);

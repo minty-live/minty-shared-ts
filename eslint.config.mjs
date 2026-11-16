@@ -19,6 +19,15 @@ export default defineConfig([
       // prints a warning on every run looking for one. The consumers still apply it to their own
       // pages, which is where an <a> to an internal route would actually be wrong.
       "@next/next/no-html-link-for-pages": "off",
+      // No native browser dialog anywhere - alert/confirm/prompt or "Leave site?" (owner, 2026-11-16)
+      "no-alert": "error",
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "Literal[value='beforeunload']",
+          message: "No native browser dialogs (owner, 2026-11-16): ask in the page instead.",
+        },
+      ],
       // A packaged component must not reach for an app's module by alias or by climbing out of
       // src/ - it asks the host instead. Both would resolve in this repo and fail in a consumer.
       "no-restricted-imports": [

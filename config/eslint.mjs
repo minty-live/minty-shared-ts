@@ -15,6 +15,19 @@ const minty = [
   ...nextVitals,
   ...nextTs,
   globalIgnores([".next/**", "out/**", "build/**", "next-env.d.ts", "public/pdfjs/**"]),
+  {
+    // No native browser dialog anywhere - alert/confirm/prompt or "Leave site?" (owner, 2026-11-16)
+    rules: {
+      "no-alert": "error",
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "Literal[value='beforeunload']",
+          message: "No native browser dialogs (owner, 2026-11-16): ask in the page instead.",
+        },
+      ],
+    },
+  },
 ];
 
 export default minty;
