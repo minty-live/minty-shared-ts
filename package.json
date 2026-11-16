@@ -6,7 +6,7 @@
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/minty-oliveandvine/minty-shared-ts.git"
+    "url": "git+https://github.com/minty-live/minty-shared-ts.git"
   },
   "files": [
     "src",

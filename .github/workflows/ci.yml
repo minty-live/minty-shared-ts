@@ -1,6 +1,6 @@
 # Types, lint and the unit tests.
 #
-# NOT a call into minty-oliveandvine/.github, unlike every app repo: `next-web.yml` ends in
+# NOT a call into minty-live/.github, unlike every app repo: `next-web.yml` ends in
 # `next build` and a source-published library has nothing to build, and a reusable workflow with
 # one caller is not shared CI (the same judgement the modernisation plan makes for
 # `py-package.yml`, deferred until minty-db / minty-shared-py exist). The day a second TS package

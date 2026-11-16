@@ -48,10 +48,10 @@ not strip types from `.ts` under `node_modules`): `./tsconfig.base.json`, `./pre
 ## Installing
 
 ```
-npm install "git+https://github.com/minty-oliveandvine/minty-shared-ts.git#v0.2"
+npm install "git+https://github.com/minty-live/minty-shared-ts.git#v0.2"
 ```
 
-npm will normalise that to `github:minty-oliveandvine/minty-shared-ts#v0.2` in `package.json`
+npm will normalise that to `github:minty-live/minty-shared-ts#v0.2` in `package.json`
 and to a `git+ssh://` URL in `package-lock.json` whatever you type. **That is expected and it
 works**, because this repo is public: npm falls back to HTTPS, so `npm install` and `npm ci` both
 succeed with no SSH key anywhere (verified 2026-10-12 with ssh forced to fail). Making this repo
