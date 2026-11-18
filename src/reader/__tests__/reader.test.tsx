@@ -13,6 +13,7 @@ import {
   edited,
   failureOf,
   fillable,
+  ReadButton,
   ReaderNote,
   readerState,
   ReadFailedLine,
@@ -246,5 +247,21 @@ describe("the classic pieces", () => {
     expect(use).toHaveBeenCalledTimes(1);
     expect(screen.getByText('The invoice reads "<b>x</b>".')).toBeInTheDocument(); // text, never markup
     expect(SUGGESTED_RING).toBe("ring-2 ring-[#54D3DA] ring-offset-1");
+  });
+
+  it("draw the read button: 44px, radius 12, never a submit", async () => {
+    const read = vi.fn();
+    const submit = vi.fn((e: { preventDefault: () => void }) => e.preventDefault());
+    render(
+      <form onSubmit={submit}>
+        <ReadButton label="Read the receipt" onClick={read} />
+      </form>,
+    );
+    const button = screen.getByRole("button", { name: "Read the receipt" });
+    expect(button).toHaveAttribute("type", "button");
+    expect(button).toHaveClass("min-h-11", "rounded-[12px]");
+    await userEvent.click(button);
+    expect(read).toHaveBeenCalledTimes(1);
+    expect(submit).not.toHaveBeenCalled();
   });
 });

@@ -42,6 +42,26 @@ export function ReadingNotice({ title, detail }: { title: string; detail: string
 }
 
 /**
+ * The press that starts a read (owner, 2026-11-18): a document is never read on attaching it, only
+ * when the person asks. Secondary, never the form's primary action (Brand is never a fill): white,
+ * the reader's teal border and label, radius 12, 44px tall. `type="button"` - it never submits.
+ */
+export function ReadButton({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="mb-1 mt-3 inline-flex min-h-11 max-w-full cursor-pointer items-center gap-2 rounded-[12px] border border-[#31B6BD] bg-white px-4 py-2 text-left text-sm font-semibold text-[#31B6BD] hover:bg-[#54D3DA]/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#31B6BD]"
+    >
+      <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M12 2l2.4 6.2L21 10l-6.6 1.8L12 18l-2.4-6.2L3 10l6.6-1.8L12 2z" />
+      </svg>
+      <span className="min-w-0 break-words">{label}</span>
+    </button>
+  );
+}
+
+/**
  * Under a suggested field: the sparkle, the app's "<Field> suggested" text, and Clear. Its id goes
  * in the field's aria-describedby, so the line is read with the field.
  */

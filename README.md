@@ -204,7 +204,11 @@ suggestions (owner, 2026-11-04) - Petty Cash's Add New Expense and Payment Reque
   `failed` - the one quiet failure line's switch (a failure reason, a cut connection, or
   `onSuggestions` returning false because nothing was shown).
 - The classic-look pieces, in hex: `ReadingNotice`, `SuggestedLine`, `ReaderNote`,
-  `ReadFailedLine`, `SUGGESTED_RING`. Each app passes its own words.
+  `ReadFailedLine`, `SUGGESTED_RING`, and (v0.22) `ReadButton`. Each app passes its own words.
+- v0.22 (owner, 2026-11-18): a document is read only when the person presses `ReadButton`
+  ("Read the receipt", "Read the invoice") - never on attaching it. Each app shows the button once
+  a readable file is attached, the API says the reader is switched on, and that file has not been
+  read yet (again after a failed read), and calls `useDocumentReader`'s `read(file)` on the press.
 
 Each app keeps its fields and words (minty-petty-cash-web `lib/expenseAi.ts`,
 minty-payment-request-web `lib/invoiceReader.ts`). Needs the `@source` line.
