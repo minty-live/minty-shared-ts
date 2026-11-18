@@ -9,7 +9,7 @@
  * where each item leads, which company and modules, what Logout owes, who is looking.
  *
  * Top to bottom: the Minty mark; THE PERSON (avatar + name), which switches the sidebar to My
- * Profile (the header's initials open it there directly); Select Entity; Manage subscriptions
+ * Profile (the header's initials open it there directly); Select Company; Manage subscriptions
  * (only for a viewer whose `can_view_subscriptions` is true - admins, accountants and subscribers,
  * v0.19); then, INSIDE A COMPANY only (02-D), its Petty
  * Cash and Payment Request sections; the cat, above the last group (the user's rule); and
@@ -239,7 +239,7 @@ export function SideMenu({ modules, viewer, onClose, onProfile }: SideMenuProps)
           <span className="flex w-[28px] shrink-0 justify-center" aria-hidden>
             <Image src="/menu/select-entity.svg" alt="" width={22} height={20} unoptimized />
           </span>
-          Select Entity
+          Select Company
         </MenuLink>
         {canViewSubscriptions ? (
           <MenuLink

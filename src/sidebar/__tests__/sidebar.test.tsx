@@ -76,7 +76,7 @@ describe("the packaged sidebar", () => {
     render(app(ADMIN));
     await open();
 
-    expect(item("Select Entity")).toHaveAttribute("href", "/entities");
+    expect(item("Select Company")).toHaveAttribute("href", "/entities");
     expect(item("Manage subscriptions")).toHaveAttribute("href", "/subscription");
     expect(item("Dashboard")).toHaveAttribute("href", "https://minty.test/entity/e1/enter");
     expect(item("Reports")).toHaveAttribute(
@@ -91,7 +91,7 @@ describe("the packaged sidebar", () => {
     host.setCurrent("entities");
     render(app(ADMIN));
     await open();
-    expect(item("Select Entity")).toHaveAttribute("aria-current", "page");
+    expect(item("Select Company")).toHaveAttribute("aria-current", "page");
     expect(item("Manage subscriptions")).not.toHaveAttribute("aria-current");
   });
 
@@ -121,7 +121,7 @@ describe("the packaged sidebar", () => {
   ])("hides Manage subscriptions when the flag is %s", async (_label, viewer) => {
     render(app(viewer));
     await open();
-    expect(item("Select Entity")).toBeInTheDocument();
+    expect(item("Select Company")).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Manage subscriptions" })).toBeNull();
   });
 
@@ -284,7 +284,7 @@ describe("with no profile slot", () => {
 
   it("links the header's initials to the entity list, and names it so", () => {
     render(<ViewerBadge viewer={ANN} />);
-    const badge = screen.getByRole("link", { name: "Select Entity" });
+    const badge = screen.getByRole("link", { name: "Select Company" });
     expect(badge).toHaveAttribute("href", "/entities");
     expect(badge).toHaveAttribute("title", "Ann Lee");
     expect(screen.queryByRole("link", { name: /My Profile/ })).toBeNull();

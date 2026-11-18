@@ -6,7 +6,7 @@
  * morning's hover-only badge). The menu's name opens the same view.
  *
  * Without a sidebar that can hold the profile (a screen on its own), the badge is a link to the
- * entity list, named "Select Entity" for where it goes: there is no profile page to open (the
+ * entity list, named "Select Company" for where it goes: there is no profile page to open (the
  * owner, 2026-11-03 - My Profile opens only in the sidebar).
  *
  * `viewer` is what the page already knows (the module page's own model names the viewer);
@@ -55,7 +55,7 @@ export function ViewerBadge({ viewer }: { viewer?: Viewer | null }) {
     <a
       href={host.links.entities()}
       className={L.badge}
-      aria-label="Select Entity"
+      aria-label="Select Company"
       title={person.name}
     >
       <span className={L.badgeCircle} aria-hidden>

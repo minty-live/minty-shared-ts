@@ -79,7 +79,7 @@ describe("the two looks", () => {
       expect(has(nav, S.nav)).toBe(true);
       expect(
         has(
-          within(nav).getByRole("link", { name: "Select Entity" }),
+          within(nav).getByRole("link", { name: "Select Company" }),
           `${S.row} ${S.idle} ${S.selectEntity}`,
         ),
       ).toBe(true);
