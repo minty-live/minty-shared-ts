@@ -22,7 +22,16 @@
 export type ModuleAccess = { pettyCash: boolean; billing: boolean };
 
 /** Which menu item is the page being shown, for `aria-current` and the profile-page case. */
-export type SideMenuCurrent = "profile" | "entities" | "subscriptions" | "settings" | null;
+export type SideMenuCurrent =
+  | "profile"
+  | "entities"
+  | "subscriptions"
+  | "settings"
+  // v0.23 (owner, 2026-11-18): the module rows highlight on their own page too.
+  | "dashboard"
+  | "reports"
+  | "bills"
+  | null;
 
 /**
  * The person looking: what the header's badge and the menu's person block show. `email` (v0.14)

@@ -95,6 +95,23 @@ describe("the packaged sidebar", () => {
     expect(item("Manage subscriptions")).not.toHaveAttribute("aria-current");
   });
 
+  // Owner, 2026-11-18: Bills is an ordinary row (no longer tinted on every page), and the module
+  // rows highlight on their own page like the others.
+  it.each(["dashboard", "reports", "bills"] as const)(
+    "marks the %s row current on its own page, and only there",
+    async (where) => {
+      host.setEntity("e1", "Acme");
+      host.setCurrent(where);
+      render(app(ADMIN));
+      await open();
+      const rows = { dashboard: "Dashboard", reports: "Reports", bills: "Bills" };
+      for (const [key, name] of Object.entries(rows)) {
+        if (key === where) expect(item(name)).toHaveAttribute("aria-current", "page");
+        else expect(item(name)).not.toHaveAttribute("aria-current");
+      }
+    },
+  );
+
   // Manage subscriptions is for admins, accountants and subscribers (owner, 2026-11-12):
   // accounts-api's `user.can_view_subscriptions`, carried on the viewer.
   it.each<[string, Viewer | null]>([

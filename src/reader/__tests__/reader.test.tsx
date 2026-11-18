@@ -246,7 +246,7 @@ describe("the classic pieces", () => {
     expect(clear).toHaveBeenCalledTimes(1);
     expect(use).toHaveBeenCalledTimes(1);
     expect(screen.getByText('The invoice reads "<b>x</b>".')).toBeInTheDocument(); // text, never markup
-    expect(SUGGESTED_RING).toBe("ring-2 ring-[#54D3DA] ring-offset-1");
+    expect(SUGGESTED_RING).toBe("ring-2 ring-border-selected ring-offset-1");
   });
 
   it("draw the read button: 44px, radius 12, never a submit", async () => {

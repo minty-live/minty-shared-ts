@@ -126,8 +126,7 @@ describe("ErrorSummary", () => {
     unmount();
     render(<ErrorSummary items={items} attempt={1} look="classic" />);
     const classic = screen.getByRole("alert");
-    expect(classic).toHaveClass("bg-red-50", "text-red-700", "rounded-[12px]");
-    expect(classic.className).not.toMatch(/status-danger|border-focus/);
+    expect(classic).toHaveClass("bg-status-danger-bg", "text-status-danger-ink", "rounded-[12px]");
     expect(classic).toHaveFocus();
   });
 });

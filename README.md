@@ -113,6 +113,23 @@ that renders it must import this file - without it the menu draws in Tailwind's 
 values exist under `:root[data-theme="dark"]` and nothing sets that attribute yet (Light at
 launch, D-24). Note it redefines Tailwind's `--radius-sm/md/lg/xl`: that is the Part 13 scale.
 
+### `colors.css` - the colours alone (v0.23)
+
+```css
+@import "@minty/shared/colors.css"; /* the Part 13 colours only - no radius, type or shadow */
+```
+
+**One palette for every app: minty-web `main`'s colours (owner, 2026-11-18), not Part 13/14.**
+The `--minty-main-*` primitives hold main's most-used colour for each job - primary #4FC7C7, focus
+#54D3DA, links #2E9B9B, text #16202E/#6B7380/#8B93A0, lines #EEF1F4/#D8DEE4, danger
+#DC5A5A/#B42318 - and a checked tick box is #3CBCC3 (`action-tick`). The owner tunes it page by
+page (Figma 566:909). `colors.css` holds the primitives, the `--color-*` roles and their Dark
+values - and nothing else, so an app that keeps Tailwind's
+own `rounded-*`/`text-*` steps (minty-web, minty-payment-request-web) takes every colour from here
+without its shapes moving. `tokens.css` imports it: load one or the other. **Every consumer must
+load one of the two from v0.23** - the classic looks draw in these roles. A checked tick box is
+Minty Action #3CBCC3 with a white mark.
+
 ### The sidebar rail (opt-in)
 
 `<SidebarProvider rail>` keeps the menu on screen as a fixed 280px rail on the right from 1280px
@@ -145,14 +162,11 @@ are the same - with two sets of classes (`src/sidebar/looks.ts`, `src/profile/lo
 ```
 
 My Profile and its Subscriptions Overview follow the provider's look (or take `look` themselves,
-for a page drawn outside a sidebar). `classic` is kept verbatim from the originals with two
-mechanical substitutions, so it needs neither the app's old tokens nor `tokens.css`:
-minty-web main's colour tokens written in as values (`primary` #656565, `accent` #f15a24,
-`teal-strong` #18c4c7, avatar #ffe6b1 / #6b3a12), and Tailwind's radius steps as pixels
-(`tokens.css` redefines `rounded-md/-lg/-xl`). That is the one sanctioned exception to "never a
-hex" - including its Brand #54D3DA button fills - because it is the original preserved, not a new
-screen. Every `classic` class was traced back to its source (86 slots, 2026-10-20); a test keeps
-Part 13 classes and the redefined radius steps out of it. Both looks drop the PASSWORD row, and
+for a page drawn outside a sidebar). `classic` keeps the originals' geometry verbatim (every
+class traced back to its source, 86 slots, 2026-10-20), with Tailwind's radius steps as pixels
+(`tokens.css` redefines `rounded-md/-lg/-xl`). Its colours are the Part 13 roles from
+`colors.css` since v0.23 (one palette, owner 2026-11-18): its buttons are Minty Action, never
+Brand #54D3DA. A test keeps hexes, palette colours and the redefined radius steps out of it. Both looks drop the PASSWORD row, and
 both keep the two fixes made since v0.1: the panel fills the sheet, and the sheet's shadow only
 while open.
 
@@ -186,8 +200,8 @@ under the same contract as `SIDEBAR_ASSETS`.
 
 minty-payment-request-web still renders its own copies; it moves to these in its own task.
 
-v0.13: `ErrorSummary` takes `look="classic"` (the plain reds the classic forms' messages use, no
-tokens) for every app's `main`/`development`; `v2`, the token look, stays the default.
+v0.13: `ErrorSummary` takes `look="classic"` for every app's `main`/`development` (v0.23: the same
+danger colours as `v2`, with the classic radius); `v2` stays the default.
 
 ### The document reader (`@minty/shared/reader`, v0.13)
 
@@ -203,7 +217,7 @@ suggestions (owner, 2026-11-04) - Petty Cash's Add New Expense and Payment Reque
 - `useDocumentReader({ post, field, latch, onSuggestions })`: one read at a time, cancellable, and
   `failed` - the one quiet failure line's switch (a failure reason, a cut connection, or
   `onSuggestions` returning false because nothing was shown).
-- The classic-look pieces, in hex: `ReadingNotice`, `SuggestedLine`, `ReaderNote`,
+- The classic-look pieces (v0.23: in the `colors.css` roles): `ReadingNotice`, `SuggestedLine`, `ReaderNote`,
   `ReadFailedLine`, `SUGGESTED_RING`, and (v0.22) `ReadButton`. Each app passes its own words.
 - v0.22 (owner, 2026-11-18): a document is read only when the person presses `ReadButton`
   ("Read the receipt", "Read the invoice") - never on attaching it. Each app shows the button once
@@ -242,7 +256,7 @@ href }])` (a link) or `onSelect` (a callback); pass a stable array.
 - Mount it inside `SidebarProvider` (its look; the rail offset from 1280px) and the app's toast.
   It draws nothing until the viewer is known, so the sign-in pages show no cat; `hidden` hides it
   on a public page.
-- The classic look writes its colours in (minty-onboarding-web loads no `tokens.css`); its icons
+- The classic look draws in the `colors.css` roles (v0.23) with its own shadows; its icons
   are inline SVG, because the apps load different Material Symbols faces, or none.
 - The cat is the owner's own waving clip (an animated WebP, the still frame first and under
   reduced motion); it squishes on a tap and hops when a message is sent; the pop-up and window rise out of it, lines pop in, rows lift and press in.

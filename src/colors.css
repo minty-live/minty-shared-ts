@@ -1,0 +1,281 @@
+/**
+ * @minty/shared/colors.css - the Minty tokens: the colours ONLY (the `--minty-*` primitives, the
+ * `--color-*` roles and their Dark values). No radius, type or elevation, so an app that keeps
+ * Tailwind's own `rounded-*` / `text-*` scale (minty-web, Payment Request web) can take every
+ * colour from here without its shapes moving. `tokens.css` imports this file: load one or the
+ * other, never both.
+ *
+ * THE MINTY TOKENS ARE MAIN'S PALETTE (owner, 2026-11-18): minty-web `main`'s most-used colour for
+ * each job, so every other app draws the way main does - not Part 13/14. The values are the
+ * `--minty-main-*` primitives below; the Figma board LGkVZqcyxSIh6pp5ihDjXw 566:909 shows them.
+ * The owner tunes them page by page. Screens use the role utilities (bg-action-primary,
+ * text-text-secondary ...), never a hex.
+ *
+ * THEMES. Light is the theme at launch. Dark values are defined below under
+ * `[data-theme="dark"]` and nothing sets that attribute yet.
+ */
+
+:root {
+  /* Brand teal, hue 183. 400 is Minty Primary - identity, and the Module & Subscription fills. */
+  --minty-brand-50: #effafa;
+  --minty-brand-100: #d6f3f5;
+  --minty-brand-200: #ace8ec;
+  --minty-brand-300: #83dde2;
+  --minty-brand-400: #54d3da;
+  --minty-brand-500: #3ec4cc;
+  --minty-brand-600: #29a7ae;
+  --minty-brand-700: #1d8a90;
+  --minty-brand-800: #19676b;
+  --minty-brand-900: #16484b;
+  --minty-brand-950: #0b3b3e;
+  /* Minty Action #3cbcc3: the checked tick box (`--color-action-tick`, owner 2026-11-18). */
+  --minty-mint-action-500: #3cbcc3;
+  --minty-mint-action-600: #35b2b9;
+  --minty-mint-action-700: #2fa4ab;
+  /* Neutral, teal-tinted, 15 steps (light surfaces down to dark-mode surfaces). */
+  --minty-neutral-0: #ffffff;
+  --minty-neutral-25: #f8f9f9;
+  --minty-neutral-50: #f3f4f4;
+  --minty-neutral-100: #e8eaea;
+  --minty-neutral-200: #d9dcdb;
+  --minty-neutral-300: #bfc4c4;
+  --minty-neutral-400: #a3aaaa;
+  --minty-neutral-500: #848c8c;
+  --minty-neutral-600: #676f6f;
+  --minty-neutral-700: #535a5a;
+  --minty-neutral-800: #404545;
+  --minty-neutral-900: #242828;
+  --minty-neutral-925: #1e2222;
+  --minty-neutral-950: #181b1b;
+  --minty-neutral-975: #111313;
+  /* Status families: only the steps the semantic roles use (Part 13 lists no full ramps). */
+  --minty-green-100: #dff4ec;
+  --minty-green-300: #6fd7ae;
+  --minty-green-800: #0c5c42;
+  --minty-green-900: #12352a;
+  --minty-amber-100: #fdf0dc;
+  --minty-amber-300: #f5c46e;
+  --minty-amber-800: #7e4e05;
+  --minty-amber-900: #3a2a0e;
+  --minty-red-100: #fcecec;
+  --minty-red-200: #f5b8ba;
+  --minty-red-300: #f29a9d;
+  --minty-red-700: #c2363b;
+  --minty-red-800: #a82a2f;
+  --minty-red-900: #3e1a1c;
+  --minty-blue-50: #e7f4fe;
+  --minty-blue-300: #8cc8f8;
+  --minty-blue-500: #3aa6f5;
+  --minty-blue-800: #1b57b4;
+  --minty-blue-900: #132a44;
+  --minty-yellow-50: #fef7e9;
+  --minty-yellow-300: #f7ce7a;
+  --minty-yellow-500: #f5b945;
+  --minty-yellow-800: #8a5606;
+  --minty-yellow-900: #3a2d12;
+  /* THE MAIN PALETTE (owner, 2026-11-18): minty-web main's most-used colour for each job. */
+  --minty-main-action: #4fc7c7;
+  --minty-main-action-hover: #61cdcd;
+  --minty-main-action-pressed: #45b3b3;
+  --minty-main-focus: #54d3da;
+  --minty-main-selected-bg: #e6f9fa;
+  --minty-main-selected-ink: #1fa9b1;
+  --minty-main-link: #2e9b9b;
+  --minty-main-outline: #18c4c7;
+  --minty-main-glow: #00cbc6;
+  --minty-main-ink: #16202e;
+  --minty-main-ink-2: #6b7380;
+  --minty-main-mute: #8b93a0;
+  --minty-main-quiet: #a0a8b2;
+  --minty-main-line: #eef1f4;
+  --minty-main-edge: #d8dee4;
+  --minty-main-sunk: #f5f7fa;
+  --minty-main-canvas: #f9fafb;
+  --minty-main-danger: #dc5a5a;
+  --minty-main-danger-ink: #b42318;
+  --minty-main-danger-bg: #fff5f5;
+  --minty-main-warn: #ea9713;
+  --minty-main-warn-bg: #fff7ec;
+  --minty-main-ok-bg: #ecfdfb;
+  --minty-main-ok-ink: #115e56;
+  --minty-main-info: #2374f2;
+  --minty-main-neutral-bg: #eff1f4;
+  --minty-main-avatar-bg: #54d3da;
+  --minty-main-avatar-ink: #ffffff;
+  /* Petty Cash's own colours, kept from main (owner, 2026-11-18): sales, the Report Calendar, the
+     Ending step's charts, the publish tooltip's marks and the Quick Action icons. */
+  --minty-pc-sales: #00c896;
+  --minty-pc-cal-missing: #ff6b6b;
+  --minty-pc-cal-submitted: #ebeef2;
+  --minty-pc-weekend: #f1b337;
+  --minty-pc-chart-bar: #e1f3f5;
+  --minty-pc-chart-label: #b8b8b8;
+  --minty-pc-chart-day-label: #ef4444;
+  --minty-pc-pie-1: #278cf4;
+  --minty-pc-pie-2: #f1b337;
+  --minty-pc-pie-3: #f2822c;
+  --minty-pc-pie-4: #b8e467;
+  --minty-pc-pie-5: #67e4c0;
+  --minty-pc-pie-6: #9f67e4;
+  --minty-pc-pie-7: #e4679d;
+  --minty-pc-pie-other: #f1db37;
+  --minty-pc-tip-ok: #86efac;
+  --minty-pc-tip-ok-strong: #4ade80;
+  --minty-pc-tip-bad: #f87171;
+  --minty-pc-purple-bg: #f3e8ff;
+  --minty-pc-purple: #9333ea;
+  --minty-pc-orange-bg: #ffedd5;
+  --minty-pc-orange: #ea580c;
+}
+
+@theme {
+  /* ---- The roles, Light ---- */
+  --color-brand-primary: var(--minty-brand-400);
+
+  --color-surface-page: var(--minty-neutral-0);
+  --color-surface-canvas: var(--minty-main-canvas);
+  --color-surface-card: var(--minty-neutral-0);
+  --color-surface-sunk: var(--minty-main-sunk);
+  --color-surface-raised: var(--minty-neutral-0);
+  --color-surface-document: var(--minty-main-line);
+
+  --color-border-subtle: var(--minty-main-line);
+  --color-border-default: var(--minty-main-edge);
+  --color-border-input: var(--minty-main-edge);
+  --color-border-selected: var(--minty-main-action);
+  --color-border-focus: var(--minty-main-focus);
+
+  --color-text-primary: var(--minty-main-ink);
+  --color-text-secondary: var(--minty-main-ink-2);
+  --color-text-muted: var(--minty-main-mute);
+  --color-text-disabled: var(--minty-main-quiet);
+  --color-text-link: var(--minty-main-link);
+  --color-text-inverse: var(--minty-neutral-0);
+
+  --color-action-primary: var(--minty-main-action);
+  --color-action-primary-hover: var(--minty-main-action-hover);
+  --color-action-primary-pressed: var(--minty-main-action-pressed);
+  --color-action-on-primary: var(--minty-neutral-0);
+  --color-action-secondary-border: var(--minty-main-outline);
+  --color-action-secondary-text: var(--minty-main-link);
+  --color-action-primary-glow: var(--minty-main-glow);
+  /* A checked tick box or picked radio: Minty Action #3cbcc3 with a white mark (owner). */
+  --color-action-tick: var(--minty-mint-action-500);
+  --color-action-danger: var(--minty-main-danger);
+  --color-action-danger-hover: var(--minty-main-danger-ink);
+  --color-action-on-danger: var(--minty-neutral-0);
+  --color-action-disabled: var(--minty-main-line);
+
+  --color-state-selected: var(--minty-main-selected-bg);
+  /* The selected row's text: the sidebar's current page, the "All" filter (owner, 2026-11-18). */
+  --color-state-selected-ink: var(--minty-main-selected-ink);
+  --color-state-hover: var(--minty-main-sunk);
+
+  /* Status pills: soft background + deep ink, no border (D-09). */
+  --color-status-success-bg: var(--minty-main-ok-bg);
+  --color-status-success-ink: var(--minty-main-ok-ink);
+  --color-status-warning-bg: var(--minty-main-warn-bg);
+  --color-status-warning-ink: var(--minty-main-warn);
+  --color-status-danger-bg: var(--minty-main-danger-bg);
+  --color-status-danger-ink: var(--minty-main-danger-ink);
+  --color-status-info-bg: var(--minty-blue-50);
+  --color-status-info-ink: var(--minty-main-info);
+  --color-status-neutral-bg: var(--minty-main-neutral-bg);
+  --color-status-neutral-ink: var(--minty-main-ink-2);
+  /* "Setup in progress" (a company still onboarding) - its own pair, not Info's blue. */
+  --color-status-progress-bg: var(--minty-main-selected-bg);
+  --color-status-progress-ink: var(--minty-main-selected-ink);
+
+  /* Module identity - chips, navigation, module art, plan cards ONLY; never amounts, alerts or
+     buttons (Part 13 §13.4). */
+  --color-module-payment: var(--minty-blue-500);
+  --color-module-payment-wash: var(--minty-blue-50);
+  --color-module-payment-ink: var(--minty-main-info);
+  --color-module-pettycash: var(--minty-yellow-500);
+  --color-module-pettycash-wash: var(--minty-yellow-50);
+  --color-module-pettycash-ink: var(--minty-yellow-800);
+
+  --color-accent-avatar-bg: var(--minty-main-avatar-bg);
+  --color-accent-avatar-ink: var(--minty-main-avatar-ink);
+
+  /* Petty Cash (owner, 2026-11-18): data colours, never buttons or alerts. */
+  --color-pettycash-sales: var(--minty-pc-sales);
+  --color-calendar-today: var(--minty-pc-sales);
+  --color-calendar-missing: var(--minty-pc-cal-missing);
+  --color-calendar-submitted: var(--minty-pc-cal-submitted);
+  --color-calendar-weekend: var(--minty-pc-weekend);
+  --color-chart-bar: var(--minty-pc-chart-bar);
+  --color-chart-label: var(--minty-pc-chart-label);
+  --color-chart-day: var(--minty-pc-cal-missing);
+  --color-chart-day-label: var(--minty-pc-chart-day-label);
+  --color-chart-pie-1: var(--minty-pc-pie-1);
+  --color-chart-pie-2: var(--minty-pc-pie-2);
+  --color-chart-pie-3: var(--minty-pc-pie-3);
+  --color-chart-pie-4: var(--minty-pc-pie-4);
+  --color-chart-pie-5: var(--minty-pc-pie-5);
+  --color-chart-pie-6: var(--minty-pc-pie-6);
+  --color-chart-pie-7: var(--minty-pc-pie-7);
+  --color-chart-pie-other: var(--minty-pc-pie-other);
+  --color-tooltip-ok: var(--minty-pc-tip-ok);
+  --color-tooltip-ok-strong: var(--minty-pc-tip-ok-strong);
+  --color-tooltip-bad: var(--minty-pc-tip-bad);
+  --color-quick-purple-bg: var(--minty-pc-purple-bg);
+  --color-quick-purple: var(--minty-pc-purple);
+  --color-quick-orange-bg: var(--minty-pc-orange-bg);
+  --color-quick-orange: var(--minty-pc-orange);
+
+  /* overlay/scrim: #111313 at 48% Light, #000 at 64% Dark (S4-04). */
+  --color-overlay-scrim: rgb(17 19 19 / 0.48);
+}
+/* Dark - defined, not switched on (D-24: screens get Dark after launch). */
+:root[data-theme="dark"] {
+  --color-surface-page: var(--minty-neutral-975);
+  --color-surface-card: var(--minty-neutral-950);
+  --color-surface-sunk: var(--minty-neutral-925);
+  --color-surface-raised: var(--minty-neutral-900);
+  --color-surface-document: var(--minty-neutral-975);
+
+  --color-border-subtle: var(--minty-neutral-900);
+  --color-border-default: var(--minty-neutral-800);
+  --color-border-input: var(--minty-neutral-600);
+  --color-border-selected: var(--minty-brand-400);
+  --color-border-focus: var(--minty-brand-300);
+
+  --color-text-primary: var(--minty-neutral-25);
+  --color-text-secondary: var(--minty-neutral-300);
+  --color-text-muted: var(--minty-neutral-400);
+  --color-text-disabled: var(--minty-neutral-600);
+  --color-text-link: var(--minty-brand-300);
+  --color-text-inverse: var(--minty-neutral-900);
+
+  --color-action-secondary-border: var(--minty-brand-400);
+  --color-action-secondary-text: var(--minty-brand-300);
+  --color-action-danger: var(--minty-red-300);
+  --color-action-danger-hover: var(--minty-red-200);
+  --color-action-on-danger: var(--minty-neutral-975);
+  --color-action-disabled: var(--minty-neutral-900);
+
+  --color-state-selected: var(--minty-brand-900);
+  --color-state-hover: var(--minty-neutral-925);
+
+  --color-status-success-bg: var(--minty-green-900);
+  --color-status-success-ink: var(--minty-green-300);
+  --color-status-warning-bg: var(--minty-amber-900);
+  --color-status-warning-ink: var(--minty-amber-300);
+  --color-status-danger-bg: var(--minty-red-900);
+  --color-status-danger-ink: var(--minty-red-300);
+  --color-status-info-bg: var(--minty-blue-900);
+  --color-status-info-ink: var(--minty-blue-300);
+  --color-status-neutral-bg: var(--minty-neutral-900);
+  --color-status-neutral-ink: var(--minty-neutral-300);
+
+  --color-module-payment-wash: var(--minty-blue-900);
+  --color-module-payment-ink: var(--minty-blue-300);
+  --color-module-pettycash-wash: var(--minty-yellow-900);
+  --color-module-pettycash-ink: var(--minty-yellow-300);
+
+  --color-accent-avatar-bg: var(--minty-yellow-900);
+  --color-accent-avatar-ink: var(--minty-yellow-300);
+
+  --color-overlay-scrim: rgb(0 0 0 / 0.64);
+}

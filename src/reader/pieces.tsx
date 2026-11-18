@@ -2,23 +2,23 @@
  * The document reader's pieces in the classic look (every app's `main`/`development`): the teal
  * "Reading..." box, the line under a suggested field with Clear, the grey note offering a different
  * reading, and the one quiet failure line. Lifted from minty-petty-cash-web's ReceiptReader.tsx
- * (Flask's classic page before it); the colours are its theme's, as hex, so every app draws them
- * the same with no tokens. Each app passes its own words. Text read off a document is drawn as
+ * (Flask's classic page before it), in the Part 13 colour roles from `colors.css` (one palette
+ * for every app, owner 2026-11-18). Each app passes its own words. Text read off a document is drawn as
  * text, never as markup.
  */
 
-/** The ring on a field holding an untouched suggestion (Flask: `ring-2 ring-[#54D3DA] ring-offset-1`). */
-export const SUGGESTED_RING = "ring-2 ring-[#54D3DA] ring-offset-1";
+/** The ring on a field holding an untouched suggestion (Flask's teal ring, in the Part 13 selected border). */
+export const SUGGESTED_RING = "ring-2 ring-border-selected ring-offset-1";
 
 /** While the document is read (QA found 12px grey text was missed; the wait is seconds). */
 export function ReadingNotice({ title, detail }: { title: string; detail: string }) {
   return (
     <div
       role="status"
-      className="mb-1 mt-3 flex items-center gap-3 rounded-[12px] border border-[#54D3DA] bg-[#54D3DA]/10 px-4 py-3"
+      className="mb-1 mt-3 flex items-center gap-3 rounded-[12px] border border-border-selected bg-state-selected px-4 py-3"
     >
       <svg
-        className="h-5 w-5 shrink-0 animate-spin text-[#31B6BD]"
+        className="h-5 w-5 shrink-0 animate-spin text-text-link"
         viewBox="0 0 24 24"
         fill="none"
         aria-hidden="true"
@@ -34,8 +34,8 @@ export function ReadingNotice({ title, detail }: { title: string; detail: string
         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
       </svg>
       <div className="min-w-0">
-        <p className="text-sm font-medium text-[#31B6BD]">{title}</p>
-        <p className="text-xs text-[#6B7280]">{detail}</p>
+        <p className="text-sm font-medium text-text-link">{title}</p>
+        <p className="text-xs text-text-muted">{detail}</p>
       </div>
     </div>
   );
@@ -51,7 +51,7 @@ export function ReadButton({ label, onClick }: { label: string; onClick: () => v
     <button
       type="button"
       onClick={onClick}
-      className="mb-1 mt-3 inline-flex min-h-11 max-w-full cursor-pointer items-center gap-2 rounded-[12px] border border-[#31B6BD] bg-white px-4 py-2 text-left text-sm font-semibold text-[#31B6BD] hover:bg-[#54D3DA]/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#31B6BD]"
+      className="mb-1 mt-3 inline-flex min-h-11 max-w-full cursor-pointer items-center gap-2 rounded-[12px] border border-action-secondary-border bg-surface-card px-4 py-2 text-left text-sm font-semibold text-action-secondary-text hover:bg-state-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
     >
       <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
         <path d="M12 2l2.4 6.2L21 10l-6.6 1.8L12 18l-2.4-6.2L3 10l6.6-1.8L12 2z" />
@@ -77,7 +77,7 @@ export function SuggestedLine({
   onClear: () => void;
 }) {
   return (
-    <div className="mt-1.5 flex flex-wrap items-center gap-x-1.5 text-sm text-[#31B6BD]">
+    <div className="mt-1.5 flex flex-wrap items-center gap-x-1.5 text-sm text-text-link">
       <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
         <path d="M12 2l2.4 6.2L21 10l-6.6 1.8L12 18l-2.4-6.2L3 10l6.6-1.8L12 2z" />
       </svg>
@@ -105,12 +105,12 @@ export function ReaderNote({
   onAction: () => void;
 }) {
   return (
-    <div className="mt-2 rounded-[8px] border border-[#E5E7EB] bg-[#F9FAFB] px-3 py-2.5 text-sm">
-      <p className="break-words text-[#4B5563]">{text}</p>
+    <div className="mt-2 rounded-[8px] border border-border-default bg-surface-sunk px-3 py-2.5 text-sm">
+      <p className="break-words text-text-secondary">{text}</p>
       <button
         type="button"
         onClick={onAction}
-        className="mt-1 min-h-11 cursor-pointer break-words text-left font-medium text-[#31B6BD] underline hover:no-underline"
+        className="mt-1 min-h-11 cursor-pointer break-words text-left font-medium text-text-link underline hover:no-underline"
       >
         {action}
       </button>
@@ -125,7 +125,7 @@ export function ReaderNote({
  */
 export function ReadFailedLine({ text }: { text: string }) {
   return (
-    <p role="status" className="mb-1 mt-3 break-words text-sm text-[#4B5563]">
+    <p role="status" className="mb-1 mt-3 break-words text-sm text-text-secondary">
       {text}
     </p>
   );

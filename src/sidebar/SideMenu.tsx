@@ -52,8 +52,8 @@ export type SideMenuProps = MenuContext & {
 
 // The classes are the look's (`./looks.ts`). v2: rows are 44 high at least, grey until hovered,
 // and the page being shown (aria-current) is tinted as the selected row. classic: the original
-// Figma 02 rows (Inter 500 18px #8f8f8f), the page being shown marked for assistive technology
-// only. In both, the one tinted row otherwise is Bills, drawn as a button ("Bill Button").
+// Figma 02 rows (Inter 500 18px), grey, and the page being shown tinted pale teal with teal text
+// (owner, 2026-11-18). Every row, Bills included, is tinted only on its own page.
 
 function MenuLink({
   href,
@@ -272,7 +272,7 @@ export function SideMenu({ modules, viewer, onClose, onProfile }: SideMenuProps)
               <MenuLink
                 look={L}
                 href={host.links.pettyCashDashboard()}
-                current={false}
+                current={current === "dashboard"}
                 onNavigate={onClose}
                 className={L.dashboard}
               >
@@ -289,7 +289,7 @@ export function SideMenu({ modules, viewer, onClose, onProfile }: SideMenuProps)
               <MenuLink
                 look={L}
                 href={host.links.pettyCashReports(entityId)}
-                current={false}
+                current={current === "reports"}
                 onNavigate={onClose}
                 className={L.reports}
               >
@@ -324,10 +324,12 @@ export function SideMenu({ modules, viewer, onClose, onProfile }: SideMenuProps)
                 icon={{ src: "/menu/payment-request.svg", width: 76, height: 76 }}
                 iconBox=""
               />
-              <a
+              <MenuLink
+                look={L}
                 href={host.links.bills()}
-                onClick={onClose}
-                className={`${L.row} ${L.button} ${L.bills}`}
+                current={current === "bills"}
+                onNavigate={onClose}
+                className={L.bills}
               >
                 <Image
                   src="/menu/bills.svg"
@@ -338,7 +340,7 @@ export function SideMenu({ modules, viewer, onClose, onProfile }: SideMenuProps)
                   aria-hidden
                 />
                 Bills
-              </a>
+              </MenuLink>
             </div>
           ) : null}
         </div>

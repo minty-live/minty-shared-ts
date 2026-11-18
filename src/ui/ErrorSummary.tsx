@@ -10,8 +10,8 @@
  * the amount to continue.") - never "Error", "Invalid" or "Mandatory".
  *
  * Two looks, as the sidebar (owner, 2026-10-20): `v2` (the default) draws in the redesign's tokens;
- * `classic` - every app's `main`/`development`, which load no token sheet - in the plain reds the
- * classic forms already use for their messages (2026-11-04).
+ * `classic` - every app's `main`/`development` - in the same danger colours from `colors.css` (one
+ * palette, owner 2026-11-18), with the classic radius written in.
  */
 
 import { useEffect, useRef } from "react";
@@ -21,7 +21,7 @@ export type SummaryItem = { fieldId: string; message: string };
 const LOOKS = {
   v2: "rounded-md bg-status-danger-bg p-3 text-body-m text-status-danger-ink outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus",
   classic:
-    "rounded-[12px] border border-red-200 bg-red-50 p-3 text-sm text-red-700 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-500",
+    "rounded-[12px] bg-status-danger-bg p-3 text-sm text-status-danger-ink outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus",
 } as const;
 
 export function ErrorSummary({

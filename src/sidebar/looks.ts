@@ -4,14 +4,11 @@
  * - `v2` - the redesign, minty-web's "Minty v2" look (v0.4), on every `development` branch. Part 13
  *   semantic tokens from `@minty/shared/tokens.css`.
  * - `classic` - the original design, as minty-web's `main` draws it (and v0.1 of this package),
- *   on every `main` branch. Kept VERBATIM, with two mechanical substitutions so it needs nothing
- *   from the app or from `tokens.css`:
- *     - minty-web main's colour tokens written in as their values (`primary` #656565, `accent`
- *       #f15a24, `teal-strong` #18c4c7, `--avatar-bg` #ffe6b1, `--avatar-fg` #6b3a12);
- *     - Tailwind's own radius steps written in as pixels (`rounded-md` 6px, `-lg` 8px, `-xl`
- *       12px), because `tokens.css` redefines those steps to Part 13's scale.
- *   That is the one sanctioned exception to "never a hex": a legacy look preserved, not a new
- *   screen.
+ *   on every `main` branch. Its geometry is kept verbatim, with Tailwind's own radius steps
+ *   written in as pixels (`rounded-md` 6px, `-lg` 8px, `-xl` 12px) because `tokens.css`
+ *   redefines those steps to Part 13's scale. Its colours are the Part 13 roles from
+ *   `colors.css` (v0.23: one palette for every app, owner 2026-11-18), so the consumer loads
+ *   `colors.css` or `tokens.css`.
  *
  * A consumer picks one: `<SidebarProvider look="classic">`; the default is `v2`, so a v0.5
  * consumer is unchanged.
@@ -72,32 +69,32 @@ export const SIDEBAR_LOOK = {
     logout: "cursor-pointer gap-4 pl-4 text-left",
   },
   classic: {
-    scrim: "bg-[#d9d9d9]/70 ease-out",
+    scrim: "bg-overlay-scrim ease-out",
     // The shadow only while open, as in v2 (695ae34): closed, the sheet waits past the right edge
     // and its shadow fell back onto every page as a faint strip - a fix, not a look.
-    sheet: "border border-[#ededed] ease-out",
-    sheetProfile: "w-full bg-[#f9fafb] sm:w-[440px]",
-    sheetMenu: "w-[min(100%,353px)] bg-white",
+    sheet: "border border-border-subtle ease-out",
+    sheetProfile: "w-full bg-surface-sunk sm:w-[440px]",
+    sheetMenu: "w-[min(100%,353px)] bg-surface-card",
     sheetOpen: "translate-x-0 shadow-[-6px_4px_18px_0px_rgba(15,23,42,0.1)]",
     menuButton:
-      "inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-[6px] transition-colors hover:bg-[#656565]/10",
+      "inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-[6px] transition-colors hover:bg-state-hover",
     badge:
-      "inline-flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-full bg-[#ffe6b1] text-[12px] font-semibold text-[#6b3a12] transition-shadow hover:ring-2 hover:ring-[#656565]/30 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#656565]",
+      "inline-flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-full bg-accent-avatar-bg text-[12px] font-semibold text-accent-avatar-ink transition-shadow hover:ring-2 hover:ring-border-selected/25 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus",
     badgeCircle: undefined,
     row: "flex w-full items-center rounded-[12px] text-[18px] font-medium leading-[22px] transition-colors",
-    idle: "text-[#8f8f8f] hover:bg-[#f5f5f5]",
-    button: "bg-[rgba(202,241,244,0.5)] text-[#54d3da] hover:bg-[rgba(202,241,244,0.8)]",
-    separator: "h-px w-full shrink-0 bg-[#ededed]",
+    idle: "text-text-muted hover:bg-state-hover aria-[current=page]:bg-state-selected aria-[current=page]:text-state-selected-ink",
+    button: "bg-state-selected text-text-link hover:bg-state-hover",
+    separator: "h-px w-full shrink-0 bg-border-subtle",
     moduleHeading: "flex items-center justify-between pl-[19px]",
     moduleTitle: "text-[18px] font-bold leading-[22px]",
     person:
-      "mt-[30px] flex w-full cursor-pointer items-center gap-[40px] rounded-[12px] py-[3px] pl-[35px] text-left hover:bg-[#f5f5f5]",
+      "mt-[30px] flex w-full cursor-pointer items-center gap-[40px] rounded-[12px] py-[3px] pl-[35px] text-left hover:bg-state-hover",
     /** The person, where no profile slot can open (v0.12): the same block, not a control. */
     personStatic:
       "mt-[30px] flex w-full items-center gap-[40px] rounded-[12px] py-[3px] pl-[35px] text-left",
     avatar:
-      "flex h-[57px] w-[56px] shrink-0 items-center justify-center rounded-[91px] bg-[#ffe6b1] text-[30px] font-medium text-[#6b3a12]",
-    name: "max-w-[130px] break-words text-[18px] leading-[22px] text-[#1f2937]",
+      "flex h-[57px] w-[56px] shrink-0 items-center justify-center rounded-[91px] bg-accent-avatar-bg text-[30px] font-medium text-accent-avatar-ink",
+    name: "max-w-[130px] break-words text-[18px] leading-[22px] text-text-primary",
     nav: "flex min-h-full flex-col pl-[49px] pr-[53px] pt-[max(49px,env(safe-area-inset-top,0px))] pb-[max(42px,env(safe-area-inset-bottom,0px))]",
     logo: "ml-[89px] h-auto w-[99px] shrink-0",
     firstSeparator: "mt-[32px]",
@@ -106,13 +103,13 @@ export const SIDEBAR_LOOK = {
     subscriptions: "min-h-[66px] gap-[21px] pl-[32px]",
     secondSeparator: "mt-[16px]",
     pettyGroup: "mt-[25px] flex flex-col",
-    pettyTone: "text-[#16202e]",
-    pettyIconBox: "bg-[#f7efd9]",
+    pettyTone: "text-text-primary",
+    pettyIconBox: "bg-module-pettycash-wash",
     dashboard: "mt-[14px] min-h-[44px] gap-[24px] pl-[19px]",
     reports: "min-h-[44px] gap-[24px] pl-[19px]",
     moduleSeparator: "mt-[26px]",
     paymentGroup: "mt-[30px] flex flex-col",
-    paymentTone: "text-[#2374f2]",
+    paymentTone: "text-module-payment-ink",
     bills: "mt-[28px] min-h-[41px] gap-[25px] pl-[17px]",
     spacer: "min-h-[24px] flex-1",
     cat: "flex shrink-0 justify-center pb-[16px]",

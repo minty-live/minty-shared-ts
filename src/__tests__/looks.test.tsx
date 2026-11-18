@@ -8,6 +8,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { installFakeHost } from "../../test/fakeHost";
 import { _setViewerLoaderForTests } from "../lib/viewer";
+import { CONTACT_LOOK } from "../contact/looks";
 import { PROFILE_LOOK } from "../profile/looks";
 import { SCOPED } from "../profile/fixtures";
 import { ProfilePanel, SubscriptionsOverviewCard, type ProfileApi } from "../profile";
@@ -116,13 +117,18 @@ describe("the two looks", () => {
     expect(has(badge, SIDEBAR_LOOK.v2.badge)).toBe(true);
   });
 
-  it("classic needs nothing from Part 13: no semantic token class in either map", () => {
-    const part13 =
-      /\b(?:bg|text|border|ring|outline)-(?:surface|text|border|action|state|status|accent|module|overlay|brand)-/;
-    for (const map of [SIDEBAR_LOOK.classic, PROFILE_LOOK.classic]) {
-      for (const [slot, classes] of Object.entries(map)) {
-        expect(classes ?? "", `classic.${slot}`).not.toMatch(part13);
-        expect(classes ?? "", `classic.${slot}`).not.toMatch(/\brounded-(?:sm|md|lg|xl)\b/);
+  it("classic draws in colors.css's roles: no hex, no palette colour, no redefined radius step", () => {
+    // One palette for every app (owner, 2026-11-18): a classic colour is a Part 13 role. Shadows
+    // keep their rgba (the shadow scale is tokens.css's, which a classic app may not load), and
+    // the radius stays in pixels (tokens.css redefines rounded-sm/-md/-lg/-xl).
+    const palette =
+      /\b(?:bg|text|border|ring|outline|fill|stroke)-(?:gray|slate|zinc|neutral|stone|red|rose|amber|yellow|green|emerald|teal|cyan|sky|blue|orange)-\d/;
+    for (const map of [SIDEBAR_LOOK.classic, PROFILE_LOOK.classic, CONTACT_LOOK.classic]) {
+      for (const [slot, raw] of Object.entries(map)) {
+        const classes = (raw ?? "").replace(/shadow-\[[^\]]*\]/g, "");
+        expect(classes, `classic.${slot}`).not.toMatch(/#[0-9a-f]{3,8}\b|rgba?\(/i);
+        expect(classes, `classic.${slot}`).not.toMatch(palette);
+        expect(classes, `classic.${slot}`).not.toMatch(/\brounded-(?:sm|md|lg|xl)\b/);
       }
     }
   });
