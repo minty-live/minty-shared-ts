@@ -8,6 +8,9 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
+  AllowanceNote,
+  allowanceText,
+  canRead,
   cleared,
   createReaderLatch,
   edited,
@@ -16,6 +19,7 @@ import {
   ReadButton,
   ReaderNote,
   readerState,
+  readerStatusOf,
   ReadFailedLine,
   ReadingNotice,
   SuggestedLine,
@@ -263,5 +267,88 @@ describe("the classic pieces", () => {
     await userEvent.click(button);
     expect(read).toHaveBeenCalledTimes(1);
     expect(submit).not.toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------------------------
+// The company's AI reads (owner, 2026-11-18): one allowance for Petty Cash and Payment Request.
+
+describe("the AI allowance", () => {
+  const open = {
+    enabled: true,
+    reads_used: null,
+    reads_limit: null,
+    reads_left: null,
+    percent_left: 80,
+    blocked: false,
+    resumes_at: null,
+  };
+
+  it("says how much of the allowance is left", () => {
+    expect(allowanceText(open)).toBe("80% of your AI allowance left");
+    expect(canRead(open)).toBe(true);
+  });
+
+  it("falls back to a count of reads from an API that sends no percent", () => {
+    expect(allowanceText({ enabled: true, reads_left: 7, reads_limit: 10 })).toBe("7 of 10 left");
+  });
+
+  it("says nothing when the reader is off or the API sends no count", () => {
+    expect(allowanceText({ enabled: false })).toBeNull();
+    expect(allowanceText({ enabled: true })).toBeNull();
+    expect(canRead({ enabled: false })).toBe(false);
+    expect(canRead(null)).toBe(false);
+  });
+
+  it("says why reading stopped, for good or until a date", () => {
+    const usedUp = { ...open, percent_left: 0, blocked: true };
+    expect(allowanceText(usedUp)).toBe(
+      "Your company has used its AI allowance. Fill in the details yourself.",
+    );
+    expect(canRead(usedUp)).toBe(false);
+    const paused = { ...usedUp, resumes_at: "2026-11-19T09:00:00+00:00" };
+    expect(allowanceText(paused)).toBe(
+      "AI reading is paused until 19 Nov. Fill in the details yourself for now.",
+    );
+  });
+
+  it("reads the status out of an answer only when it has the shape", () => {
+    expect(readerStatusOf({ suggestions: null, reason: "limit_reached", reader: open })).toEqual(
+      open,
+    );
+    expect(readerStatusOf({ suggestions: null, reason: "timeout" })).toBeNull();
+    expect(readerStatusOf({ reader: { percent_left: 3 } })).toBeNull();
+  });
+
+  it("draws the line beside the button and the button disabled with it", () => {
+    const blocked = { ...open, percent_left: 0, blocked: true };
+    render(
+      <>
+        <ReadButton label="Read receipt" onClick={() => {}} disabled describedBy="ai-left" />
+        <AllowanceNote id="ai-left" status={blocked} />
+      </>,
+    );
+    const button = screen.getByRole("button", { name: "Read receipt" });
+    expect(button).toBeDisabled();
+    expect(button).toHaveAccessibleDescription(/used its AI allowance/);
+  });
+
+  it("is not a failure when the allowance is used up, and hands the status to the form", async () => {
+    const latch = createReaderLatch("test.allowance");
+    latch.reset();
+    const onStatus = vi.fn();
+    const blocked = { ...open, percent_left: 0, blocked: true };
+    const post = vi
+      .fn()
+      .mockResolvedValue({ suggestions: null, reason: "limit_reached", reader: blocked });
+    const { result } = renderHook(() =>
+      useDocumentReader({ post, field: "receipt", latch, onSuggestions: () => true, onStatus }),
+    );
+
+    await act(() => result.current.read(new File(["%PDF"], "r.pdf", { type: "application/pdf" })));
+
+    expect(onStatus).toHaveBeenCalledWith(blocked);
+    expect(result.current.failed).toBe(false);
+    expect(latch.readerOff()).toBe(false);
   });
 });

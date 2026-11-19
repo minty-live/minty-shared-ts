@@ -14,6 +14,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { readerStatusOf, type ReaderStatus } from "./allowance";
 import { failureOf, readingCopy, suggestionsOf, type ReaderLatch } from "./core";
 
 export type DocumentReaderOptions<S> = {
@@ -24,6 +25,12 @@ export type DocumentReaderOptions<S> = {
   latch: ReaderLatch;
   /** Applies the suggestions; return false when nothing at all was shown. */
   onSuggestions: (suggestions: S) => boolean | void;
+  /**
+   * The company's AI reads after this read (the answer's `reader`; owner, 2026-11-18) - called
+   * even when the person has moved on, since the read was made. `limit_reached` is not a failure:
+   * the form disables the button and says why instead.
+   */
+  onStatus?: (status: ReaderStatus) => void;
 };
 
 export function useDocumentReader<S>({
@@ -31,6 +38,7 @@ export function useDocumentReader<S>({
   field,
   latch,
   onSuggestions,
+  onStatus,
 }: DocumentReaderOptions<S>) {
   const token = useRef(0);
   const controller = useRef<AbortController | null>(null);
@@ -69,6 +77,8 @@ export function useDocumentReader<S>({
       body.set(field, copy, file.name);
       const answer = await post(body, abort.signal);
       latch.noteAnswer(answer as { reason?: string | null } | null);
+      const status = readerStatusOf(answer);
+      if (status) onStatus?.(status);
       if (mine !== token.current) return;
       if (latch.readerOff()) return;
       const suggestions = suggestionsOf<S>(answer);

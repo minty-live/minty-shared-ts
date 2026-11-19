@@ -46,12 +46,26 @@ export function ReadingNotice({ title, detail }: { title: string; detail: string
  * when the person asks. Secondary, never the form's primary action (Brand is never a fill): white,
  * the reader's teal border and label, radius 12, 44px tall. `type="button"` - it never submits.
  */
-export function ReadButton({ label, onClick }: { label: string; onClick: () => void }) {
+export function ReadButton({
+  label,
+  onClick,
+  disabled = false,
+  describedBy,
+}: {
+  label: string;
+  onClick: () => void;
+  /** The company's AI reads are used up (owner, 2026-11-18): the reason sits beside it. */
+  disabled?: boolean;
+  /** The id of the allowance line beside the button (`AllowanceNote`). */
+  describedBy?: string;
+}) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="mb-1 mt-3 inline-flex min-h-11 max-w-full cursor-pointer items-center gap-2 rounded-[12px] border border-action-secondary-border bg-surface-card px-4 py-2 text-left text-sm font-semibold text-action-secondary-text hover:bg-state-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
+      disabled={disabled}
+      aria-describedby={describedBy}
+      className="mb-1 mt-3 inline-flex min-h-11 max-w-full cursor-pointer items-center gap-2 rounded-[12px] border border-action-secondary-border bg-surface-card px-4 py-2 text-left text-sm font-semibold text-action-secondary-text hover:bg-state-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus disabled:cursor-not-allowed disabled:border-border-default disabled:bg-action-disabled disabled:text-text-disabled disabled:hover:bg-action-disabled"
     >
       <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
         <path d="M12 2l2.4 6.2L21 10l-6.6 1.8L12 18l-2.4-6.2L3 10l6.6-1.8L12 2z" />
