@@ -14,6 +14,8 @@
  *   when it is reached with `?expired=1` (OK only closes it: the person is already there).
  *
  * The cat is a file each app serves (`SESSION_EXPIRED_ASSETS`).
+ * The card's shadow is ConfirmDialog's own, not `shadow-modal`: minty-web and Payment Request web
+ * load colors.css without tokens.css, where `--shadow-modal` lives.
  */
 
 import { createPortal } from "react-dom";
@@ -51,7 +53,7 @@ export function SessionExpiredDialog({ open, onOk }: { open: boolean; onOk: () =
         aria-labelledby={titleId}
         aria-describedby={textId}
         tabIndex={-1}
-        className="relative max-h-full w-full min-w-0 max-w-[435px] overflow-y-auto rounded-[24px] border border-white/40 bg-white p-6 shadow-modal outline-none sm:p-12"
+        className="relative max-h-full w-full min-w-0 max-w-[435px] overflow-y-auto rounded-[24px] border border-white/40 bg-white p-6 shadow-[0px_4px_8px_0px_rgba(15,23,42,0.08),0px_12px_32px_0px_rgba(0,0,0,0.1)] outline-none sm:p-12"
       >
         <div className="flex items-start justify-between gap-4">
           <h2
