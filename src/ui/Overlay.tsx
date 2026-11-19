@@ -30,7 +30,7 @@ const FOCUSABLE =
  */
 const overlayStack: symbol[] = [];
 
-function useOverlayBehaviour(
+export function useOverlayBehaviour(
   open: boolean,
   panel: RefObject<HTMLElement | null>,
   onRequestClose: () => void,

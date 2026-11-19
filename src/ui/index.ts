@@ -17,6 +17,12 @@ export { Icon } from "./Icon";
 export { InlineAlert, PageBanner } from "./InlineAlert";
 export { Drawer, Modal } from "./Overlay";
 export { PageHeader } from "./PageHeader";
+export {
+  SESSION_EXPIRED_TEXT,
+  SESSION_EXPIRED_TITLE,
+  SessionExpiredDialog,
+  SessionExpiredHost,
+} from "./SessionExpired";
 export { SegmentedControl } from "./SegmentedControl";
 export { Skeleton } from "./Skeleton";
 export { StatusPill } from "./StatusPill";
