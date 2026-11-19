@@ -8,7 +8,17 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
+  AI_CAUTION,
+  AI_FX_CAUTION,
+  AiCaution,
+  aiCaution,
+  convertedText,
+  exchangeFailedOf,
+  exchangeFields,
+  exchangeKept,
+  exchangeOf,
   AllowanceNote,
+  type Exchange,
   allowanceText,
   canRead,
   cleared,
@@ -253,6 +263,17 @@ describe("the classic pieces", () => {
     expect(SUGGESTED_RING).toBe("ring-2 ring-border-selected ring-offset-1");
   });
 
+  it("draw the caution under AI-filled fields: the owner's sentence, read with the form", () => {
+    render(<AiCaution id="ai-caution" />);
+    const note = screen.getByText(AI_CAUTION);
+    expect(AI_CAUTION).toBe(
+      "AI suggestions may be inaccurate. Please check every field against the receipt before saving.",
+    );
+    expect(note).toHaveAttribute("id", "ai-caution");
+    expect(note).toHaveClass("text-sm"); // never under 12px
+    expect(note).not.toHaveAttribute("role"); // not an alert: it stays on the form, quietly
+  });
+
   it("draw the read button: 44px, radius 12, never a submit", async () => {
     const read = vi.fn();
     const submit = vi.fn((e: { preventDefault: () => void }) => e.preventDefault());
@@ -350,5 +371,78 @@ describe("the AI allowance", () => {
     expect(onStatus).toHaveBeenCalledWith(blocked);
     expect(result.current.failed).toBe(false);
     expect(latch.readerOff()).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------------------------
+// An amount read in another currency (owner, 2026-11-19): converted at Frankfurter's rate.
+
+const EXCHANGE: Exchange = {
+  original_currency: "USD",
+  original_amount: "12.34",
+  rate: "7.846",
+  rate_date: "2026-11-13",
+  date_basis: "receipt",
+  source: "Frankfurter",
+};
+
+describe("an amount converted from another currency", () => {
+  it("reads the API's exchange, and nothing that isn't one", () => {
+    expect(exchangeOf({ amount: {}, exchange: EXCHANGE })).toEqual(EXCHANGE);
+    expect(exchangeOf({ exchange: { ...EXCHANGE, date_basis: "invoice" } })).toBeNull();
+    expect(exchangeOf({ exchange: { ...EXCHANGE, rate: "" } })).toBeNull();
+    expect(exchangeOf({})).toBeNull();
+    expect(exchangeOf(null)).toBeNull();
+    expect(exchangeFailedOf({ exchange_failed: { currency: "TWD" } })).toBe("TWD");
+    expect(exchangeFailedOf({ exchange_failed: {} })).toBeNull();
+  });
+
+  it("travels with the line only while the amount is still the converted one", () => {
+    expect(exchangeKept("96.82", "96.82")).toBe(true);
+    expect(exchangeKept("1,096.82", "1096.82")).toBe(true); // the field's grouping
+    expect(exchangeKept("96.8", "96.80")).toBe(true);
+    expect(exchangeKept("96.83", "96.82")).toBe(false);
+    expect(exchangeKept("", "96.82")).toBe(false);
+  });
+
+  it("gives the save its six fields by the API's names", () => {
+    expect(exchangeFields(EXCHANGE)).toEqual({
+      original_currency: "USD",
+      original_amount: "12.34",
+      exchange_rate: "7.846",
+      exchange_rate_date: "2026-11-13",
+      exchange_rate_basis: "receipt",
+      exchange_rate_source: "Frankfurter",
+    });
+  });
+
+  it("says how it was converted, which way the rate runs, and why its day differs", () => {
+    expect(convertedText(EXCHANGE, "HKD")).toBe(
+      "converted from USD\u00a012.34 at 1 USD = 7.846 HKD (13 Nov 2026 rate)",
+    );
+    // a Sunday's receipt: Friday's rate, and the page says why
+    expect(convertedText({ ...EXCHANGE, asked_date: "2026-11-15" }, "HKD")).toBe(
+      "converted from USD\u00a012.34 at 1 USD = 7.846 HKD (13 Nov 2026 rate, the last business day before 15 Nov 2026)",
+    );
+    expect(convertedText({ ...EXCHANGE, asked_date: "2026-11-13" }, "HKD")).toBe(
+      "converted from USD\u00a012.34 at 1 USD = 7.846 HKD (13 Nov 2026 rate)",
+    );
+  });
+
+  it("the caution names what was read, and adds the rate's sentence only when a rate was applied", () => {
+    expect(AI_FX_CAUTION).toBe(
+      "The exchange rate is a central bank reference rate and may differ from the amount actually charged.",
+    );
+    const { rerender } = render(<AiCaution id="c" />);
+    expect(screen.queryByText(AI_FX_CAUTION)).toBeNull();
+    rerender(<AiCaution id="c" exchange />);
+    expect(document.getElementById("c")).toHaveTextContent(`${AI_CAUTION} ${AI_FX_CAUTION}`);
+    rerender(<AiCaution id="c" document="invoice" />);
+    expect(document.getElementById("c")).toHaveTextContent(
+      "AI suggestions may be inaccurate. Please check every field against the invoice before saving.",
+    );
+    expect(aiCaution("invoice")).toBe(
+      "AI suggestions may be inaccurate. Please check every field against the invoice before saving.",
+    );
   });
 });

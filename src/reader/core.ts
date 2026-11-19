@@ -19,6 +19,9 @@
  * saves (the API writes nothing either).
  */
 
+import { formatDay } from "../lib/dates";
+import { formatMoney } from "../lib/money";
+
 export type Band = "high" | "medium" | "low";
 
 /** One read field: the value, the model's confidence (0-1), its band, and whether to prefill. */
@@ -289,4 +292,80 @@ export async function readingCopy(file: File): Promise<Blob> {
     // Unsupported, out of memory, a browser quirk: the original goes, and the server shrinks it.
     return file;
   }
+}
+
+// ---------------------------------------------------------------------------------------------
+// An amount read in another currency (owner, 2026-11-19): the API converts it at Frankfurter v1's
+// rate (the European Central Bank's) and says how in `exchange`; with no rate the amount comes back
+// empty and `exchange_failed` names the currency. The six details travel with the saved line only
+// while its amount is still the converted one.
+
+export type Exchange = {
+  original_currency: string;
+  original_amount: string;
+  rate: string;
+  rate_date: string;
+  date_basis: "receipt" | "report_date";
+  source: string;
+  /** The day asked for; a weekend or holiday moves `rate_date` back from it. */
+  asked_date?: string;
+};
+
+const text = (v: unknown): v is string => typeof v === "string" && v.trim() !== "";
+
+/** The answer's `exchange`, or null for anything that isn't a whole one. */
+export function exchangeOf(suggestions: unknown): Exchange | null {
+  const ex = (suggestions as { exchange?: Partial<Exchange> } | null)?.exchange;
+  if (!ex || typeof ex !== "object") return null;
+  const { original_currency, original_amount, rate, rate_date, date_basis, source } = ex;
+  if (![original_currency, original_amount, rate, rate_date, source].every(text)) return null;
+  if (date_basis !== "receipt" && date_basis !== "report_date") return null;
+  return { ...(ex as Exchange) };
+}
+
+/** The currency no rate was found for (the amount came back empty), or null. */
+export function exchangeFailedOf(suggestions: unknown): string | null {
+  const failed = (suggestions as { exchange_failed?: { currency?: unknown } } | null)
+    ?.exchange_failed;
+  return text(failed?.currency) ? failed.currency : null;
+}
+
+const amountNumber = (v: string): number | null => {
+  const cleaned = v.replace(/[,\s]/g, ""); // \s covers the non-breaking space
+  if (cleaned === "") return null;
+  const n = Number(cleaned);
+  return Number.isFinite(n) ? n : null;
+};
+
+/** Whether the amount field still holds the converted amount (grouping and trailing zeros aside). */
+export function exchangeKept(amount: string, converted: string): boolean {
+  const a = amountNumber(amount);
+  const b = amountNumber(converted);
+  return a !== null && b !== null && a === b;
+}
+
+/** The six details by the names a save sends (the line's columns). */
+export function exchangeFields(ex: Exchange): Record<string, string> {
+  return {
+    original_currency: ex.original_currency,
+    original_amount: ex.original_amount,
+    exchange_rate: ex.rate,
+    exchange_rate_date: ex.rate_date,
+    exchange_rate_basis: ex.date_basis,
+    exchange_rate_source: ex.source,
+  };
+}
+
+/**
+ * For the amount's suggested line: "converted from USD 12.34 at 1 USD = 7.846 HKD (13 Nov 2026
+ * rate)" - which way the rate runs, and, when a weekend or holiday moved the rate's day back, why
+ * (", the last business day before 15 Nov 2026"). `code` is the company's currency.
+ */
+export function convertedText(ex: Exchange, code?: string | null): string {
+  const rate = code ? `1 ${ex.original_currency} = ${ex.rate} ${code}` : ex.rate;
+  const moved =
+    ex.asked_date && ex.asked_date !== ex.rate_date
+      ? `, the last business day before ${formatDay(ex.asked_date)}`
+      : "";
+  return `converted from ${formatMoney(ex.original_amount, ex.original_currency, 2)} at ${rate} (${formatDay(ex.rate_date)} rate${moved})`;
 }
