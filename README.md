@@ -238,6 +238,25 @@ suggestions (owner, 2026-11-04) - Petty Cash's Add New Expense and Payment Reque
 Each app keeps its fields and words (minty-petty-cash-web `lib/expenseAi.ts`,
 minty-payment-request-web `lib/invoiceReader.ts`). Needs the `@source` line.
 
+### "Your session has expired" (`@minty/shared/sessionExpired` + `ui`, v0.26-v0.27)
+
+One pop-up for every app (owner, 2026-11-19): a Minty sign-in ends after 60 minutes without
+activity, or on sign-out, and every API then answers its 401 with `reason: "session_expired"`
+(minty-shared-py `tokens.unauthorized_reason`). `isSessionExpired(body)` reads that;
+`showSessionExpired(loginUrl)` raises the pop-up once (later calls change nothing) and
+`SessionExpiredHost`, drawn once in each app's `app/layout.tsx`, shows it - OK, Escape and the
+backdrop go to `loginUrl`. `SessionExpiredDialog({ open, onOk })` is the same pop-up driven by its
+props (minty-web's sign-in page opens it on `?expired=1`; OK only closes it). It is drawn as
+minty-web's question modal (`ConfirmDialog`'s one-button case): the title beside the clock cat,
+the sentence (`SESSION_EXPIRED_TITLE` / `SESSION_EXPIRED_TEXT`), one centred teal OK (full width on
+a phone); focus, the focus trap and the scroll lock are `Overlay`'s `useOverlayBehaviour`. The cat
+is `/session/minty-clock.webp`, which each app serves and asserts (`SESSION_EXPIRED_ASSETS`, like
+`CONTACT_ASSETS`). v0.27 gave the card `ConfirmDialog`'s own shadow: minty-web and Payment Request
+web load `colors.css` without `tokens.css`, where `shadow-modal` lives. A 401 without the reason is
+only the app's 30-minute token running out - renewed quietly, no pop-up. Each app's
+`lib/sessionExpired.ts` is its seam over this store (its callers and tests use it). Needs the
+`@source` line.
+
 ### The Minty cat and "Talk to Minty" (`@minty/shared/contact`, v0.14)
 
 The cat at the bottom right of every app (owner, 2026-11-05). A click opens a pop-up on the cat
