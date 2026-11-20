@@ -818,3 +818,53 @@ describe.each<Look>(["classic", "v2"])("the %s look", (look) => {
     expect(chat().className).toContain(CONTACT_LOOK[look].window);
   });
 });
+
+describe("the message, kept in this browser (auto-save, 2026-11-20)", () => {
+  const jwt = (claims: object) => `x.${btoa(JSON.stringify(claims)).replace(/=+$/, "")}.y`;
+
+  beforeEach(() => {
+    host.setToken(jwt({ user_id: "u-olive", entity_id: "e-1" }));
+  });
+
+  async function toMessage() {
+    const view = await openSupport();
+    await answer(view, "Your name", "Olive Vine");
+    await answer(view, "Your email", "olive@test.com");
+    await answer(view, "Your company", "Olive Tree Cafe");
+    await userEvent.click(view.getByRole("button", { name: "Technical issue" }));
+    return view;
+  }
+
+  it("asks to restore a message typed before the page went away, and Restore puts it back", async () => {
+    const first = show();
+    let view = await toMessage();
+    await userEvent.type(view.getByLabelText("Your message"), "The report total is wrong");
+    act(() => {
+      window.dispatchEvent(new Event("pagehide"));
+    });
+    first.unmount();
+
+    show();
+    view = await toMessage();
+    expect(await view.findByText(/You have unsaved changes from/)).toBeInTheDocument();
+    expect(view.getByLabelText("Your message")).toHaveValue("");
+    await userEvent.click(view.getByRole("button", { name: "Restore" }));
+    expect(view.getByLabelText("Your message")).toHaveValue("The report total is wrong");
+  });
+
+  it("is gone once the message is sent", async () => {
+    send.mockResolvedValue({ reply_to: "olive@test.com" });
+    const first = show();
+    const view = await toMessage();
+    await answer(view, "Your message", "Please call me");
+    await userEvent.click(view.getByRole("button", { name: "Send" }));
+    await waitFor(() => expect(send).toHaveBeenCalled());
+    act(() => {
+      window.dispatchEvent(new Event("pagehide"));
+    });
+    first.unmount();
+    expect(Object.keys(window.localStorage).filter((k) => k.startsWith("minty:draft:"))).toEqual(
+      [],
+    );
+  });
+});

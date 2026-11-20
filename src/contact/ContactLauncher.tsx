@@ -28,6 +28,7 @@
 import {
   useEffect,
   useId,
+  useMemo,
   useReducer,
   useRef,
   useState,
@@ -39,6 +40,8 @@ import {
 import { createPortal } from "react-dom";
 
 import { requireSidebarHost } from "../host";
+import { draftScopeFromToken, useAutoSaveDraft } from "../lib/drafts";
+import { DraftNotice } from "../ui/DraftNotice";
 import { useViewer } from "../lib/viewer";
 import { useLook, useSidebar } from "../sidebar/Sidebar";
 import { useRegisteredContactActions, type ContactAction } from "./actions";
@@ -146,6 +149,27 @@ export function ContactLauncher({
   // A drag ends in a click on the cat; this swallows that one click.
   const justDragged = useRef(false);
   const [state, dispatch] = useReducer(chatReducer, START);
+  // The message, kept in this browser 2 s after the last change (auto-save, 2026-11-20): per
+  // person, not per company - one chat follows them through every company. Offered back when they
+  // reach the message question again; gone once it is sent.
+  const draftScope = useMemo(() => {
+    try {
+      const scope = draftScopeFromToken(requireSidebarHost().currentToken());
+      return scope ? { userId: scope.userId, entityId: null } : null;
+    } catch {
+      return null;
+    }
+  }, []);
+  const typedMessage = state.step === "message" ? state.draft : state.answers.message;
+  const messageDraft = useAutoSaveDraft({
+    scope: draftScope,
+    form: "contact.message",
+    record: "-",
+    shape: 1,
+    ready: state.step === "message",
+    value: { message: typedMessage },
+    dirty: typedMessage.trim() !== "" && state.step !== "sent" && state.step !== "main",
+  });
   // The still cat shows at once; the animated one (about half a megabyte) replaces it once the
   // browser has it, and every later page takes it from the cache.
   const [moving, setMoving] = useState(false);
@@ -229,6 +253,7 @@ export function ContactLauncher({
         ...(entity ? { entity } : {}),
       });
       dispatch({ type: "sent", replyTo: receipt?.reply_to ?? null });
+      messageDraft.clear();
       notify("Message sent. We'll reply by email.", "success");
     } catch (err) {
       dispatch({ type: "failed", error: sentenceOf(err) });
@@ -506,6 +531,20 @@ export function ContactLauncher({
           side={left ? "left" : "right"}
           onClose={closeChat}
           onSend={onSend}
+          draftNotice={
+            messageDraft.offer && state.step === "message" ? (
+              <DraftNotice
+                savedAt={messageDraft.offer.savedAt}
+                stale={messageDraft.offer.stale}
+                onRestore={() => {
+                  const taken = messageDraft.restore();
+                  if (taken) dispatch({ type: "type", draft: taken.value.message });
+                }}
+                onDiscard={messageDraft.discard}
+                className="mb-2"
+              />
+            ) : null
+          }
         />
       ) : null}
     </>

@@ -85,6 +85,7 @@ export function ContactChat({
   side = "right",
   onClose,
   onSend,
+  draftNotice,
 }: {
   state: ChatState;
   dispatch: Dispatch<ChatEvent>;
@@ -99,6 +100,8 @@ export function ContactChat({
   side?: "left" | "right";
   onClose: () => void;
   onSend: () => void;
+  /** "You have unsaved changes from 10:42" over the message box (auto-save), when there is one. */
+  draftNotice?: ReactNode;
 }) {
   const titleId = useId();
   const composerId = useId();
@@ -358,6 +361,7 @@ export function ContactChat({
                 composer.current?.focus();
               }}
             >
+              {step === "message" ? draftNotice : null}
               {suggestion && suggestion !== state.draft.trim() ? (
                 <button
                   type="button"
