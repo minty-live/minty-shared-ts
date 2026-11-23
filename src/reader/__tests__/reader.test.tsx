@@ -11,10 +11,14 @@ import {
   AI_CAUTION,
   AiCaution,
   convertedText,
+  evidenceRefusalOf,
   exchangeFailedOf,
   exchangeFields,
   exchangeKept,
+  exchangeNote,
   exchangeOf,
+  noEvidenceText,
+  severalDocuments,
   AllowanceNote,
   type Exchange,
   allowanceText,
@@ -187,6 +191,28 @@ describe("useDocumentReader", () => {
     expect(result.current.failed).toBe(true);
     act(() => result.current.cancel());
     expect(result.current.failed).toBe(false);
+  });
+
+  it("hands a refused document to the form, never as the quiet failure line", async () => {
+    // owner, 2026-11-23: several documents in the file, or nothing describes the payment
+    for (const reason of ["several_documents", "no_description"]) {
+      const post = vi.fn().mockResolvedValue({ suggestions: null, reason });
+      const refused = vi.fn();
+      const got = vi.fn();
+      const { result } = renderHook(() =>
+        useDocumentReader({
+          post,
+          field: "f",
+          latch: latch(),
+          onSuggestions: got,
+          onRefused: refused,
+        }),
+      );
+      await act(() => result.current.read(file));
+      expect(refused).toHaveBeenCalledWith(reason);
+      expect(got).not.toHaveBeenCalled();
+      expect(result.current.failed).toBe(false);
+    }
   });
 
   it("says nothing when switched off, and never reads again that session", async () => {
@@ -428,5 +454,45 @@ describe("an amount converted from another currency", () => {
   it("the caution is one sentence, the same for a receipt, an invoice and a converted amount", () => {
     render(<AiCaution id="c" />);
     expect(document.getElementById("c")).toHaveTextContent(/^AI suggestions may be inaccurate\.$/);
+  });
+
+  it("notes the original amount and the rate after the description (owner, 2026-11-23)", () => {
+    // plain spaces: the description goes to Xero; the rate exactly as the API gives it
+    expect(exchangeNote({ ...EXCHANGE, original_amount: "10000", rate: "0.13456" })).toBe(
+      "(USD 10,000.00 @0.13456)",
+    );
+    expect(exchangeNote(EXCHANGE)).toBe("(USD 12.34 @7.846)");
+  });
+});
+
+describe("a document that is not one record of a payment (owner, 2026-11-23)", () => {
+  it("reads the two refusals out of an answer, and nothing else", () => {
+    expect(evidenceRefusalOf({ suggestions: null, reason: "several_documents" })).toBe(
+      "several_documents",
+    );
+    expect(evidenceRefusalOf({ suggestions: null, reason: "no_description" })).toBe(
+      "no_description",
+    );
+    expect(evidenceRefusalOf({ suggestions: null, reason: "timeout" })).toBeNull();
+    expect(evidenceRefusalOf({ suggestions: { a: 1 }, reason: "no_description" })).toBeNull();
+    expect(evidenceRefusalOf(null)).toBeNull();
+    // neither is the quiet "couldn't read" line
+    expect(failureOf({ suggestions: null, reason: "several_documents" })).toBe(false);
+    expect(failureOf({ suggestions: null, reason: "no_description" })).toBe(false);
+  });
+
+  it("says why, naming what was read", () => {
+    expect(noEvidenceText("receipt")).toBe(
+      "We can't tell what this payment was for, so this document isn't sufficient as a receipt. Please attach a receipt or invoice that shows the goods or services.",
+    );
+    expect(noEvidenceText("invoice")).toContain("isn't sufficient as an invoice.");
+    expect(severalDocuments("receipt")).toEqual({
+      title: "More than one receipt",
+      text: "This file contains more than one receipt. Please upload each receipt separately.",
+    });
+    expect(severalDocuments("invoice")).toEqual({
+      title: "More than one invoice",
+      text: "This file contains more than one invoice. Please upload each invoice separately.",
+    });
   });
 });

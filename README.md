@@ -234,6 +234,15 @@ suggestions (owner, 2026-11-04) - Petty Cash's Add New Expense and Payment Reque
   `exchangeFailedOf` (the API's `exchange` / `exchange_failed`), `exchangeKept` (the field still
   holds the converted figure), `exchangeFields` (the six details by the saved line's column names),
   `convertedText(exchange, code)` ("converted from USD 12.34 at 1 USD = 7.846 HKD (13 Nov 2026 rate)", plus ", the last business day before 15 Nov 2026" when a weekend or holiday moved the rate's day - the API's `asked_date`; the source stays on the line, not named to the person).
+- v0.31 (owner's launch decisions, 2026-11-23, after IRD's "A Guide to Keeping Business
+  Records"): a document that is not one record of a payment. `EVIDENCE_REASONS` /
+  `evidenceRefusalOf(answer)` (`several_documents`, `no_description`; never `failureOf`'s quiet
+  line), `useDocumentReader`'s `onRefused(reason)`, and their words: `severalDocuments(document)`
+  (the pop-up's title and text, "This file contains more than one receipt. Please upload each
+  receipt separately.") and `noEvidenceText(document)` ("We can't tell what this payment was for,
+  so this document isn't sufficient as a receipt. Please attach a receipt or invoice that shows
+  the goods or services."; "an invoice" for Payment Request). `exchangeNote(exchange)` = "(USD
+  35.00 @7.78)", added after the description (plain spaces; the rate as the API gives it).
 
 Each app keeps its fields and words (minty-petty-cash-web `lib/expenseAi.ts`,
 minty-payment-request-web `lib/invoiceReader.ts`). Needs the `@source` line.

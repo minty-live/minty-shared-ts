@@ -20,7 +20,7 @@
  */
 
 import { formatDay } from "../lib/dates";
-import { formatMoney } from "../lib/money";
+import { formatAmount, formatMoney } from "../lib/money";
 
 export type Band = "high" | "medium" | "low";
 
@@ -51,6 +51,40 @@ export const FAILURE_REASONS: readonly string[] = [
   "invalid_reply",
   "no_usable_field",
 ];
+
+/**
+ * The model answered, but the document is not one record of a payment (owner, 2026-11-23, after
+ * IRD's "A Guide to Keeping Business Records"): several receipts or invoices in the file, or
+ * nothing describes what was paid for. Not failures: the form says why (`useDocumentReader`'s
+ * `onRefused`), nothing is filled and the document stays.
+ */
+export type EvidenceRefusal = "several_documents" | "no_description";
+export const EVIDENCE_REASONS: readonly EvidenceRefusal[] = ["several_documents", "no_description"];
+
+/** The answer's refusal, or null - only for an answer with no suggestions. */
+export function evidenceRefusalOf(answer: unknown): EvidenceRefusal | null {
+  if (!answer || typeof answer !== "object" || suggestionsOf(answer)) return null;
+  const reason = (answer as { reason?: unknown }).reason;
+  return EVIDENCE_REASONS.find((r) => r === reason) ?? null;
+}
+
+/** What a read names the document it reads. */
+export type ReadDocument = "receipt" | "invoice";
+
+const articled = (document: ReadDocument) => (document === "invoice" ? "an invoice" : "a receipt");
+
+/** The owner's draft (2026-11-23) for a document that doesn't say what was paid for. */
+export function noEvidenceText(document: ReadDocument): string {
+  return `We can't tell what this payment was for, so this document isn't sufficient as ${articled(document)}. Please attach a receipt or invoice that shows the goods or services.`;
+}
+
+/** The pop-up for several documents in one file (the owner's draft, 2026-11-23; "file", not "image": a PDF reads too). */
+export function severalDocuments(document: ReadDocument): { title: string; text: string } {
+  return {
+    title: `More than one ${document}`,
+    text: `This file contains more than one ${document}. Please upload each ${document} separately.`,
+  };
+}
 
 /** The answer as data this side trusts the shape of, or null (anything else is "no suggestions"). */
 export function suggestionsOf<S = Record<string, unknown>>(answer: unknown): S | null {
@@ -354,6 +388,14 @@ export function exchangeFields(ex: Exchange): Record<string, string> {
     exchange_rate_basis: ex.date_basis,
     exchange_rate_source: ex.source,
   };
+}
+
+/**
+ * Added after the description (owner, 2026-11-23): "(USD 35.00 @7.78)" - the original amount and
+ * the rate exactly as the API gives it. Plain spaces: the description goes to Xero.
+ */
+export function exchangeNote(ex: Exchange): string {
+  return `(${ex.original_currency} ${formatAmount(ex.original_amount, 2)} @${ex.rate})`;
 }
 
 /**

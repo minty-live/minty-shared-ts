@@ -15,7 +15,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { readerStatusOf, type ReaderStatus } from "./allowance";
-import { failureOf, readingCopy, suggestionsOf, type ReaderLatch } from "./core";
+import {
+  evidenceRefusalOf,
+  failureOf,
+  readingCopy,
+  suggestionsOf,
+  type EvidenceRefusal,
+  type ReaderLatch,
+} from "./core";
 
 export type DocumentReaderOptions<S> = {
   /** Sends the form (the reading copy under `field`, with the document's own name) and returns the JSON answer. */
@@ -31,6 +38,12 @@ export type DocumentReaderOptions<S> = {
    * the form disables the button and says why instead.
    */
   onStatus?: (status: ReaderStatus) => void;
+  /**
+   * The model answered, but the document is not one record of a payment (owner, 2026-11-23):
+   * several in one file, or nothing describes what was paid for. The form says why; nothing is
+   * filled, the document stays, and it is never the quiet failure line.
+   */
+  onRefused?: (reason: EvidenceRefusal) => void;
 };
 
 export function useDocumentReader<S>({
@@ -39,6 +52,7 @@ export function useDocumentReader<S>({
   latch,
   onSuggestions,
   onStatus,
+  onRefused,
 }: DocumentReaderOptions<S>) {
   const token = useRef(0);
   const controller = useRef<AbortController | null>(null);
@@ -82,7 +96,9 @@ export function useDocumentReader<S>({
       if (mine !== token.current) return;
       if (latch.readerOff()) return;
       const suggestions = suggestionsOf<S>(answer);
-      if (suggestions) {
+      const refusal = evidenceRefusalOf(answer);
+      if (refusal) onRefused?.(refusal);
+      else if (suggestions) {
         if (onSuggestions(suggestions) === false) setFailed(true);
       } else if (failureOf(answer)) setFailed(true);
     } catch (error) {
