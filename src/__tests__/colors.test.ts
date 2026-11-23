@@ -16,4 +16,11 @@ describe("colors.css", () => {
     expect(css).toMatch(/--color-action-tick:\s*var\(--minty-mint-action-500\)/);
     expect(css).toMatch(/--minty-mint-action-500:\s*#3cbcc3/);
   });
+
+  it("writes the Petty Cash module name in amber #ea9713, never the dark #8a5606 (the user, 2026-11-23)", () => {
+    // light (the bare :root block) only; the dark theme keeps its own
+    const light = css.slice(0, css.search(/:root\[data-theme="dark"\]|@media/));
+    expect(light).toMatch(/--color-module-pettycash-ink:\s*var\(--minty-main-warn\)/);
+    expect(light).toMatch(/--minty-main-warn:\s*#ea9713/);
+  });
 });

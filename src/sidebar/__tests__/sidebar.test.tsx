@@ -19,6 +19,7 @@ import { _setViewerLoaderForTests } from "../../lib/viewer";
 import { NavMenu } from "../NavMenu";
 import { ViewerBadge } from "../ViewerBadge";
 import { SidebarProvider } from "../Sidebar";
+import { SIDEBAR_LOOK } from "../looks";
 
 // The fake host's usePathname reads window.location, as a real app's router would reflect it.
 // No `vi.mock("next/navigation")` anywhere here: the package does not import it (see host.ts).
@@ -188,6 +189,14 @@ describe("the packaged sidebar", () => {
     expect(screen.getByRole("group", { name: "Petty Cash" })).toBeInTheDocument();
     expect(screen.queryByRole("group", { name: "Payment Request" })).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Settings" })).toBeInTheDocument();
+    // its heading in the module's amber, as Payment Request's is in its blue (the user, 2026-11-23)
+    const pettyGroup = screen.getByRole("group", { name: "Petty Cash" });
+    expect(within(pettyGroup).getByText("Petty Cash")).toHaveClass("text-module-pettycash-ink");
+  });
+
+  it("sets the Petty Cash heading in the module's amber in both looks (the user, 2026-11-23)", () => {
+    expect(SIDEBAR_LOOK.classic.pettyTone).toBe("text-module-pettycash-ink");
+    expect(SIDEBAR_LOOK.v2.pettyTone).toBe("text-module-pettycash-ink");
   });
 
   it("draws no module sections and no Settings on the entity list", async () => {

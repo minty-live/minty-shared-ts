@@ -128,7 +128,10 @@ values - and nothing else, so an app that keeps Tailwind's
 own `rounded-*`/`text-*` steps (minty-web, minty-payment-request-web) takes every colour from here
 without its shapes moving. `tokens.css` imports it: load one or the other. **Every consumer must
 load one of the two from v0.23** - the classic looks draw in these roles. A checked tick box is
-Minty Action #3CBCC3 with a white mark.
+Minty Action #3CBCC3 with a white mark. v0.29 (the user, 2026-11-23): the Petty Cash name
+(`module-pettycash-ink`) is amber #EA9713 (minty-web main's, `--minty-main-warn`), no longer
+#8A5606, and the sidebar's Petty Cash heading is set in it in both looks, as Payment Request's is
+in its blue.
 
 ### The sidebar rail (opt-in)
 

@@ -193,7 +193,9 @@
   --color-module-payment-ink: var(--minty-main-info);
   --color-module-pettycash: var(--minty-yellow-500);
   --color-module-pettycash-wash: var(--minty-yellow-50);
-  --color-module-pettycash-ink: var(--minty-yellow-800);
+  /* the Petty Cash name in amber, minty-web main's #ea9713 (the user, 2026-11-23) - not the dark
+     yellow-800 */
+  --color-module-pettycash-ink: var(--minty-main-warn);
 
   --color-accent-avatar-bg: var(--minty-main-avatar-bg);
   --color-accent-avatar-ink: var(--minty-main-avatar-ink);
