@@ -228,7 +228,8 @@ suggestions (owner, 2026-11-04) - Petty Cash's Add New Expense and Payment Reque
   read yet (again after a failed read), and calls `useDocumentReader`'s `read(file)` on the press.
 - v0.25 (owner, 2026-11-19): `AiCaution` - the owner's sentence (`AI_CAUTION`: "AI suggestions may
   be inaccurate." - one sentence since v0.30, owner 2026-11-23, the same in both apps and for a
-  converted amount), which each form shows under its fields once a read has shown anything, until
+  converted amount; in the warning amber `text-status-warning-ink` since v0.32, the user
+  2026-11-23), which each form shows under its fields once a read has shown anything, until
   the line is saved; its id goes in the save buttons' `aria-describedby`. Also v0.25 (owner,
   2026-11-19), an amount converted from another currency: `Exchange`, `exchangeOf` /
   `exchangeFailedOf` (the API's `exchange` / `exchange_failed`), `exchangeKept` (the field still

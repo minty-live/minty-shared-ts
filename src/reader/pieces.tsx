@@ -148,14 +148,15 @@ export function ReadFailedLine({ text }: { text: string }) {
 /**
  * The owner's caution, in both apps (Petty Cash expense, Payment Request bill): under the fields
  * once a read has filled any, until the line is saved. One sentence since 2026-11-23 (owner) - the
- * "check every field" and exchange-rate sentences are gone. Quiet text, not an alert; the form puts
- * its id in the save button's aria-describedby so it is read there.
+ * "check every field" and exchange-rate sentences are gone. In the warning amber (the user,
+ * 2026-11-23), but not an alert; the form puts its id in the save button's aria-describedby so it
+ * is read there.
  */
 export const AI_CAUTION = "AI suggestions may be inaccurate.";
 
 export function AiCaution({ id }: { id: string }) {
   return (
-    <p id={id} className="mb-1 mt-3 break-words text-sm text-text-secondary">
+    <p id={id} className="mb-1 mt-3 break-words text-sm text-status-warning-ink">
       {AI_CAUTION}
     </p>
   );

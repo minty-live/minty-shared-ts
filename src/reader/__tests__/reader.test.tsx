@@ -293,6 +293,8 @@ describe("the classic pieces", () => {
     expect(AI_CAUTION).toBe("AI suggestions may be inaccurate.");
     expect(note).toHaveAttribute("id", "ai-caution");
     expect(note).toHaveClass("text-sm"); // never under 12px
+    expect(note).toHaveClass("text-status-warning-ink"); // amber (the user, 2026-11-23)
+    expect(note).not.toHaveClass("text-text-secondary");
     expect(note).not.toHaveAttribute("role"); // not an alert: it stays on the form, quietly
   });
 
