@@ -146,37 +146,17 @@ export function ReadFailedLine({ text }: { text: string }) {
 }
 
 /**
- * The owner's caution (2026-11-19), in both apps (Petty Cash expense, Payment Request bill), naming
- * what was read - the receipt or the invoice: under the fields once a read has filled any, until the
- * line is saved. Quiet text, not an alert; the form puts its id in the save button's
- * aria-describedby so it is read there.
+ * The owner's caution, in both apps (Petty Cash expense, Payment Request bill): under the fields
+ * once a read has filled any, until the line is saved. One sentence since 2026-11-23 (owner) - the
+ * "check every field" and exchange-rate sentences are gone. Quiet text, not an alert; the form puts
+ * its id in the save button's aria-describedby so it is read there.
  */
-export function aiCaution(document: "receipt" | "invoice" = "receipt"): string {
-  return `AI suggestions may be inaccurate. Please check every field against the ${document} before saving.`;
-}
+export const AI_CAUTION = "AI suggestions may be inaccurate.";
 
-export const AI_CAUTION = aiCaution("receipt");
-
-/**
- * Added when the amount was converted from another currency (owner, 2026-11-19). The source
- * (Frankfurter) is kept on the line, not named to the person (Part 11: their words, not ours).
- */
-export const AI_FX_CAUTION =
-  "The exchange rate is a central bank reference rate and may differ from the amount actually charged.";
-
-export function AiCaution({
-  id,
-  exchange = false,
-  document = "receipt",
-}: {
-  id: string;
-  exchange?: boolean;
-  document?: "receipt" | "invoice";
-}) {
-  const caution = aiCaution(document);
+export function AiCaution({ id }: { id: string }) {
   return (
     <p id={id} className="mb-1 mt-3 break-words text-sm text-text-secondary">
-      {exchange ? `${caution} ${AI_FX_CAUTION}` : caution}
+      {AI_CAUTION}
     </p>
   );
 }

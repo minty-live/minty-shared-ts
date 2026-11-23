@@ -9,9 +9,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   AI_CAUTION,
-  AI_FX_CAUTION,
   AiCaution,
-  aiCaution,
   convertedText,
   exchangeFailedOf,
   exchangeFields,
@@ -266,9 +264,7 @@ describe("the classic pieces", () => {
   it("draw the caution under AI-filled fields: the owner's sentence, read with the form", () => {
     render(<AiCaution id="ai-caution" />);
     const note = screen.getByText(AI_CAUTION);
-    expect(AI_CAUTION).toBe(
-      "AI suggestions may be inaccurate. Please check every field against the receipt before saving.",
-    );
+    expect(AI_CAUTION).toBe("AI suggestions may be inaccurate.");
     expect(note).toHaveAttribute("id", "ai-caution");
     expect(note).toHaveClass("text-sm"); // never under 12px
     expect(note).not.toHaveAttribute("role"); // not an alert: it stays on the form, quietly
@@ -429,20 +425,8 @@ describe("an amount converted from another currency", () => {
     );
   });
 
-  it("the caution names what was read, and adds the rate's sentence only when a rate was applied", () => {
-    expect(AI_FX_CAUTION).toBe(
-      "The exchange rate is a central bank reference rate and may differ from the amount actually charged.",
-    );
-    const { rerender } = render(<AiCaution id="c" />);
-    expect(screen.queryByText(AI_FX_CAUTION)).toBeNull();
-    rerender(<AiCaution id="c" exchange />);
-    expect(document.getElementById("c")).toHaveTextContent(`${AI_CAUTION} ${AI_FX_CAUTION}`);
-    rerender(<AiCaution id="c" document="invoice" />);
-    expect(document.getElementById("c")).toHaveTextContent(
-      "AI suggestions may be inaccurate. Please check every field against the invoice before saving.",
-    );
-    expect(aiCaution("invoice")).toBe(
-      "AI suggestions may be inaccurate. Please check every field against the invoice before saving.",
-    );
+  it("the caution is one sentence, the same for a receipt, an invoice and a converted amount", () => {
+    render(<AiCaution id="c" />);
+    expect(document.getElementById("c")).toHaveTextContent(/^AI suggestions may be inaccurate\.$/);
   });
 });

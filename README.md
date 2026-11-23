@@ -227,16 +227,13 @@ suggestions (owner, 2026-11-04) - Petty Cash's Add New Expense and Payment Reque
   a readable file is attached, the API says the reader is switched on, and that file has not been
   read yet (again after a failed read), and calls `useDocumentReader`'s `read(file)` on the press.
 - v0.25 (owner, 2026-11-19): `AiCaution` - the owner's sentence (`AI_CAUTION`: "AI suggestions may
-  be inaccurate. Please check every field against the receipt before saving."; Payment Request's
-  says "invoice"), which each form shows under its fields once a read has shown anything, until
+  be inaccurate." - one sentence since v0.30, owner 2026-11-23, the same in both apps and for a
+  converted amount), which each form shows under its fields once a read has shown anything, until
   the line is saved; its id goes in the save buttons' `aria-describedby`. Also v0.25 (owner,
   2026-11-19), an amount converted from another currency: `Exchange`, `exchangeOf` /
   `exchangeFailedOf` (the API's `exchange` / `exchange_failed`), `exchangeKept` (the field still
   holds the converted figure), `exchangeFields` (the six details by the saved line's column names),
-  `convertedText(exchange, code)` ("converted from USD 12.34 at 1 USD = 7.846 HKD (13 Nov 2026 rate)", plus ", the last business day before 15 Nov 2026" when a weekend or holiday moved the rate's day - the API's `asked_date`), and `AiCaution`'s
-  `document` (`receipt` | `invoice`: what the caution names; `aiCaution(document)`) and
-  `exchange` adding `AI_FX_CAUTION` ("The exchange rate is a central bank reference rate and may
-  differ from the amount actually charged." - the source stays on the line, not named to the person).
+  `convertedText(exchange, code)` ("converted from USD 12.34 at 1 USD = 7.846 HKD (13 Nov 2026 rate)", plus ", the last business day before 15 Nov 2026" when a weekend or holiday moved the rate's day - the API's `asked_date`; the source stays on the line, not named to the person).
 
 Each app keeps its fields and words (minty-petty-cash-web `lib/expenseAi.ts`,
 minty-payment-request-web `lib/invoiceReader.ts`). Needs the `@source` line.
