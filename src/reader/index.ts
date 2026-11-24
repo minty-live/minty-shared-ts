@@ -5,4 +5,5 @@
 export * from "./allowance";
 export * from "./core";
 export * from "./pieces";
+export * from "./quality";
 export { useDocumentReader, type DocumentReaderOptions } from "./useDocumentReader";

@@ -11,6 +11,8 @@ import {
   AI_CAUTION,
   AiCaution,
   convertedText,
+  documentWarningOf,
+  documentWarningText,
   evidenceRefusalOf,
   exchangeFailedOf,
   exchangeFields,
@@ -192,6 +194,32 @@ describe("useDocumentReader", () => {
     expect(result.current.failed).toBe(true);
     act(() => result.current.cancel());
     expect(result.current.failed).toBe(false);
+  });
+
+  it("hands the document's type warning to the form, read or refused, and clears it otherwise", async () => {
+    // the user, 2026-11-24: a warning, never a refusal - the suggestions still fill
+    const answers = [
+      { suggestions: { amount: 1 }, reason: null, document_warning: "bank_payment_confirmation" },
+      { suggestions: null, reason: "no_description", document_warning: "other" },
+      { suggestions: { amount: 1 }, reason: null },
+    ];
+    const warned = vi.fn();
+    const got = vi.fn();
+    for (const answer of answers) {
+      const post = vi.fn().mockResolvedValue(answer);
+      const { result } = renderHook(() =>
+        useDocumentReader({
+          post,
+          field: "f",
+          latch: latch(),
+          onSuggestions: got,
+          onWarning: warned,
+        }),
+      );
+      await act(() => result.current.read(file));
+    }
+    expect(warned.mock.calls).toEqual([["bank_payment_confirmation"], ["other"], [null]]);
+    expect(got).toHaveBeenCalledTimes(2); // a warned read still fills
   });
 
   it("hands a refused document to the form, never as the quiet failure line", async () => {
@@ -494,6 +522,38 @@ describe("an amount converted from another currency", () => {
     // plain spaces: the description goes to Xero
     expect(exchangeNote(EXCHANGE, "HKD")).toBe("(USD 12.34 @ 1 USD = 7.85 HKD)");
     expect(exchangeNote(PHP, "HKD")).toBe("(PHP 10,000.00 @ 1 HKD = 7.43 PHP)");
+  });
+});
+
+describe("a document that may not be a receipt or invoice (the user, 2026-11-24)", () => {
+  it("reads the warning out of an answer, and nothing else", () => {
+    for (const kind of ["bank_payment_confirmation", "other", "unreadable"])
+      expect(documentWarningOf({ suggestions: null, reason: null, document_warning: kind })).toBe(
+        kind,
+      );
+    expect(
+      documentWarningOf({ suggestions: {}, reason: null, document_warning: "receipt" }),
+    ).toBeNull();
+    expect(
+      documentWarningOf({ suggestions: {}, reason: null, document_warning: "selfie" }),
+    ).toBeNull();
+    expect(documentWarningOf({ suggestions: {}, reason: null })).toBeNull();
+    expect(documentWarningOf(null)).toBeNull();
+  });
+
+  it("says what it looks like and asks for a check, naming what the form expects", () => {
+    expect(documentWarningText("bank_payment_confirmation", "receipt")).toBe(
+      "This looks like a bank payment confirmation, not a receipt. Check that you've attached the receipt or invoice before you save.",
+    );
+    expect(documentWarningText("bank_payment_confirmation", "invoice")).toBe(
+      "This looks like a bank payment confirmation, not an invoice. Check that you've attached the receipt or invoice before you save.",
+    );
+    expect(documentWarningText("other", "receipt")).toBe(
+      "This doesn't look like a receipt or invoice. Check the file before you save.",
+    );
+    expect(documentWarningText("unreadable", "invoice")).toBe(
+      "This document is hard to read. Check it, or attach a clearer copy.",
+    );
   });
 });
 

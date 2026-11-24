@@ -16,10 +16,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { readerStatusOf, type ReaderStatus } from "./allowance";
 import {
+  documentWarningOf,
   evidenceRefusalOf,
   failureOf,
   readingCopy,
   suggestionsOf,
+  type DocumentWarning,
   type EvidenceRefusal,
   type ReaderLatch,
 } from "./core";
@@ -44,6 +46,12 @@ export type DocumentReaderOptions<S> = {
    * filled, the document stays, and it is never the quiet failure line.
    */
   onRefused?: (reason: EvidenceRefusal) => void;
+  /**
+   * What the document may be instead of a receipt or invoice (the user, 2026-11-24), or null -
+   * after every answered read, refused or not, so the form shows or clears its warning. A warning
+   * never stops the suggestions filling.
+   */
+  onWarning?: (warning: DocumentWarning | null) => void;
 };
 
 export function useDocumentReader<S>({
@@ -53,6 +61,7 @@ export function useDocumentReader<S>({
   onSuggestions,
   onStatus,
   onRefused,
+  onWarning,
 }: DocumentReaderOptions<S>) {
   const token = useRef(0);
   const controller = useRef<AbortController | null>(null);
@@ -96,6 +105,7 @@ export function useDocumentReader<S>({
       if (mine !== token.current) return;
       if (latch.readerOff()) return;
       const suggestions = suggestionsOf<S>(answer);
+      onWarning?.(documentWarningOf(answer));
       const refusal = evidenceRefusalOf(answer);
       if (refusal) onRefused?.(refusal);
       else if (suggestions) {

@@ -250,6 +250,15 @@ suggestions (owner, 2026-11-04) - Petty Cash's Add New Expense and Payment Reque
   foreign unit, as the API gives it, `exchangeFields`) never changes; only the display flips.
   `exchangeNote(exchange, code)` names both currencies: "(USD 35.00 @ 1 USD = 7.85 HKD)";
   `convertedText` uses `rateText` too, and shows no rate without the company's code.
+- v0.35 (the user, 2026-11-24): a wrong or poor document, warned about and never refused.
+  `photoQuality(file)` (`./quality`, no AI) - "blurry", "dark" or "small" for a JPEG/PNG, null for
+  a PDF or where the browser can't decode it; blur is the 99th percentile of |Laplacian| on a grey
+  copy at most 512 px across (`QUALITY_LIMITS`: short edge 600 px, brightness 60, edge strength
+  30 - calibrated on drawn receipts; tune on real photos), `qualityOf` the pure maths,
+  `photoQualityText(finding, name?)` the line. `documentWarningOf(answer)` /
+  `documentWarningText(warning, document)` read the API's `document_warning`
+  (`bank_payment_confirmation`, `other`, `unreadable`), and `useDocumentReader`'s
+  `onWarning(warning | null)` hands it to the form after every answered read.
 
 Each app keeps its fields and words (minty-petty-cash-web `lib/expenseAi.ts`,
 minty-payment-request-web `lib/invoiceReader.ts`). Needs the `@source` line.

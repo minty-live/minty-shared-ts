@@ -86,6 +86,34 @@ export function severalDocuments(document: ReadDocument): { title: string; text:
   };
 }
 
+/**
+ * What the read says the document may be instead of a receipt or invoice (the user, 2026-11-24):
+ * a WARNING beside whatever it filled, never a refusal - the person checks the file and saves as
+ * before. A receipt and an invoice are both fine in either form.
+ */
+export type DocumentWarning = "bank_payment_confirmation" | "other" | "unreadable";
+const DOCUMENT_WARNINGS: readonly DocumentWarning[] = [
+  "bank_payment_confirmation",
+  "other",
+  "unreadable",
+];
+
+/** The answer's document warning, or null (none, or a value this side doesn't know). */
+export function documentWarningOf(answer: unknown): DocumentWarning | null {
+  if (!answer || typeof answer !== "object") return null;
+  const value = (answer as { document_warning?: unknown }).document_warning;
+  return DOCUMENT_WARNINGS.find((w) => w === value) ?? null;
+}
+
+/** The warning's line (Part 11: what it looks like, then the check), naming what the form expects. */
+export function documentWarningText(warning: DocumentWarning, document: ReadDocument): string {
+  if (warning === "bank_payment_confirmation")
+    return `This looks like a bank payment confirmation, not ${articled(document)}. Check that you've attached the receipt or invoice before you save.`;
+  if (warning === "other")
+    return "This doesn't look like a receipt or invoice. Check the file before you save.";
+  return "This document is hard to read. Check it, or attach a clearer copy.";
+}
+
 /** The answer as data this side trusts the shape of, or null (anything else is "no suggestions"). */
 export function suggestionsOf<S = Record<string, unknown>>(answer: unknown): S | null {
   if (!answer || typeof answer !== "object") return null;
