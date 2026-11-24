@@ -1,6 +1,6 @@
 {
   "name": "@minty/shared",
-  "version": "0.35.0",
+  "version": "0.36.0",
   "description": "Minty's shared TypeScript: design tokens, the sidebar, the Part 14 primitives, and the modules every Next.js app had a copy of.",
   "license": "UNLICENSED",
   "type": "module",
@@ -47,6 +47,7 @@
     "./landing": "./src/lib/landing.ts",
     "./portal": "./src/lib/portal.ts",
     "./clientValue": "./src/lib/clientValue.ts",
+    "./heic": "./src/lib/heic.ts",
     "./tsconfig.base.json": "./config/tsconfig.base.json",
     "./prettier": "./config/prettier.json",
     "./eslint": {
