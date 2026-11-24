@@ -248,30 +248,32 @@ suggestions (owner, 2026-11-04) - Petty Cash's Add New Expense and Payment Reque
 Each app keeps its fields and words (minty-petty-cash-web `lib/expenseAi.ts`,
 minty-payment-request-web `lib/invoiceReader.ts`). Needs the `@source` line.
 
-### Auto-saved drafts (`@minty/shared/drafts` + `ui`'s `DraftNotice`, v0.28)
+### Auto-saved drafts (`@minty/shared/drafts` + `ui`'s `DraftRestore`, v0.28; v0.33 restores at once)
 
 What a person types is kept IN THIS BROWSER 2 seconds after their last change (the owner's
-decisions doc L1; the user's choices, 2026-11-20: browser only, 2 s, ask first), as a separate
+decisions doc L1; the user's choices, 2026-11-20: browser only, 2 s), as a separate
 copy - never the real record: only the form's own Save writes that. `useAutoSaveDraft({scope,
 form, record, shape, ready, basedOn, value, dirty, files})` keeps it (JSON in localStorage, files
 in IndexedDB `minty-drafts`, written when picked; a pending save is flushed on `pagehide` and when
 the tab is hidden - never `beforeunload`) and returns `offer`, `restore`, `discard` and `clear`.
-`DraftNotice` asks: "You have unsaved changes from 10:42." - Restore or Discard; nothing changes
-until the person picks. `basedOn` is the record's version when the draft was taken (an
+`DraftRestore` puts the draft back the moment the form has one - no question, nothing drawn (the
+user, 2026-11-24; v0.28-v0.32's `DraftNotice` asked "You have unsaved changes from 10:42." -
+Restore or Discard). `basedOn` is the record's version when the draft was taken (an
 `edit_version`, an `updated_at`, or `fingerprint(loaded values)`): a record saved again since
-makes the offer `stale`, shown read-only (Show what I typed), never put back.
+makes the offer `stale` (or the form passes `"locked"`: no longer changeable), and `DraftRestore`
+drops it silently - never put back over someone's save.
 
 - Kept per person and company: `minty:draft:1:{user}:{entity|-}:{form}:{record}`
   (`draftScopeFromToken`: the token's `user_id`, `entity_id`); the person is checked again on
   read, so a shared computer never shows one person's draft to another. `shape` is the form's own
   version of its value: a mismatch drops the draft.
-- Removed by the form's `clear` after its own Save, by Discard, after 7 days (`sweepDrafts`, once
+- Removed by the form's `clear` after its own Save, when stale, after 7 days (`sweepDrafts`, once
   a page load), and on an explicit sign-out (`clearDraftsForUser`, within 500 ms) - NOT on the
   60-minute session expiry, which it exists to survive. A sign-out in one app cannot reach
   another app's storage (another origin): those drafts are that same person's only and go after
   7 days.
-- Limits: 256 KB of JSON; files 10 MB each, 25 MB a draft (more is named in `missing`: "Some
-  files weren't kept. Add them again."). A storage failure (quota, private mode, IndexedDB
+- Limits: 256 KB of JSON; files 10 MB each, 25 MB a draft (more is named in `missing` and
+  simply not restored - the user, 2026-11-24: no message). A storage failure (quota, private mode, IndexedDB
   blocked) never breaks the form and never toasts: `console.error("Draft not kept", ...)` once.
 - Never kept: card details (Stripe's fields) and passwords.
 - The Talk to Minty chat keeps its message this way (form `contact.message`, per person).

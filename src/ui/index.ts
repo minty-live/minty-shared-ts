@@ -14,7 +14,7 @@ export { ErrorSummary } from "./ErrorSummary";
 export { Field, inputClass } from "./Field";
 export { FilterChip } from "./FilterChip";
 export { Icon } from "./Icon";
-export { DraftNotice, draftTimeText } from "./DraftNotice";
+export { DraftRestore } from "./DraftRestore";
 export { InlineAlert, PageBanner } from "./InlineAlert";
 export { Drawer, Modal } from "./Overlay";
 export { PageHeader } from "./PageHeader";

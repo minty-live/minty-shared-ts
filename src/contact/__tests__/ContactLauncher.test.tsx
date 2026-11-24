@@ -835,7 +835,7 @@ describe("the message, kept in this browser (auto-save, 2026-11-20)", () => {
     return view;
   }
 
-  it("asks to restore a message typed before the page went away, and Restore puts it back", async () => {
+  it("puts back a message typed before the page went away, without asking", async () => {
     const first = show();
     let view = await toMessage();
     await userEvent.type(view.getByLabelText("Your message"), "The report total is wrong");
@@ -846,10 +846,11 @@ describe("the message, kept in this browser (auto-save, 2026-11-20)", () => {
 
     show();
     view = await toMessage();
-    expect(await view.findByText(/You have unsaved changes from/)).toBeInTheDocument();
-    expect(view.getByLabelText("Your message")).toHaveValue("");
-    await userEvent.click(view.getByRole("button", { name: "Restore" }));
-    expect(view.getByLabelText("Your message")).toHaveValue("The report total is wrong");
+    await waitFor(() =>
+      expect(view.getByLabelText("Your message")).toHaveValue("The report total is wrong"),
+    );
+    expect(view.queryByText(/unsaved changes/)).toBeNull();
+    expect(view.queryByRole("button", { name: "Restore" })).toBeNull();
   });
 
   it("is gone once the message is sent", async () => {

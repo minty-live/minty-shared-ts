@@ -41,7 +41,7 @@ import { createPortal } from "react-dom";
 
 import { requireSidebarHost } from "../host";
 import { draftScopeFromToken, useAutoSaveDraft } from "../lib/drafts";
-import { DraftNotice } from "../ui/DraftNotice";
+import { DraftRestore } from "../ui/DraftRestore";
 import { useViewer } from "../lib/viewer";
 import { useLook, useSidebar } from "../sidebar/Sidebar";
 import { useRegisteredContactActions, type ContactAction } from "./actions";
@@ -533,15 +533,13 @@ export function ContactLauncher({
           onSend={onSend}
           draftNotice={
             messageDraft.offer && state.step === "message" ? (
-              <DraftNotice
-                savedAt={messageDraft.offer.savedAt}
+              <DraftRestore
                 stale={messageDraft.offer.stale}
                 onRestore={() => {
                   const taken = messageDraft.restore();
                   if (taken) dispatch({ type: "type", draft: taken.value.message });
                 }}
                 onDiscard={messageDraft.discard}
-                className="mb-2"
               />
             ) : null
           }

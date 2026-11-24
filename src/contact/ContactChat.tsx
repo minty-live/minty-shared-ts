@@ -100,7 +100,7 @@ export function ContactChat({
   side?: "left" | "right";
   onClose: () => void;
   onSend: () => void;
-  /** "You have unsaved changes from 10:42" over the message box (auto-save), when there is one. */
+  /** Puts an auto-saved message back (`DraftRestore`), when there is one; draws nothing. */
   draftNotice?: ReactNode;
 }) {
   const titleId = useId();

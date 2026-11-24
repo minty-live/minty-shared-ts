@@ -4,20 +4,20 @@
  * Auto-saved drafts (the owner's decisions doc L1; the user's choices, 2026-11-20): what a person
  * types is kept IN THIS BROWSER 2 seconds after their last change, as a separate copy - never the
  * real payment request, report step or setting, which only the person's own Save writes. When they
- * come back to the form, `DraftNotice` asks first: "You have unsaved changes from 10:42" - Restore
- * or Discard.
+ * come back to the form, `DraftRestore` puts it back at once, with no question (the user,
+ * 2026-11-24).
  *
  * - JSON in localStorage (synchronous, so a pending save is flushed on `pagehide` - never
  *   `beforeunload`, banned in every app); files (receipts, invoices) in IndexedDB (`draftFiles.ts`),
  *   written when picked.
  * - Kept per person and company: `minty:draft:1:{user}:{entity|-}:{form}:{record}`, and the person
  *   is checked again on read, so a shared computer never shows one person's draft to another.
- * - Removed on the form's own successful Save (`clear`), on Discard, after 7 days, and on an
- *   explicit sign-out (`clearDraftsForUser`) - NOT on the 60-minute session expiry, which is one of
- *   the things it exists to survive.
+ * - Removed on the form's own successful Save (`clear`), when stale (`discard`), after 7 days, and
+ *   on an explicit sign-out (`clearDraftsForUser`) - NOT on the 60-minute session expiry, which is
+ *   one of the things it exists to survive.
  * - `basedOn` is the record's version when the draft was taken (a Petty Cash report's
  *   `edit_version`, a bill's `updated_at`, or `fingerprint(loaded values)`): if the record changed
- *   since, the offer is `stale` and is only shown, never put back over someone's save.
+ *   since, the offer is `stale` and is dropped, never put back over someone's save.
  * - A storage failure (quota, private mode, IndexedDB blocked) never breaks the form and never
  *   toasts: `console.error("Draft not kept", ...)` once per draft.
  */
@@ -299,9 +299,9 @@ function keepable(files: readonly File[]): { keep: File[]; missing: string[] } {
 
 /**
  * Keep what a form holds as a browser draft (see the module note). Returns the draft to offer when
- * the form opens (`offer`) - nothing is written or removed until the person picks Restore or
- * Discard - and `clear`, which the form calls after its own Save succeeds and from its
- * leave-guard reset ("Discard changes").
+ * the form opens (`offer`) - nothing is written or removed until `restore` or `discard` is called
+ * (`DraftRestore` does it at once) - and `clear`, which the form calls after its own Save succeeds
+ * and from its leave-guard reset ("Discard changes").
  */
 export function useAutoSaveDraft<T>(opts: Options<T>): {
   offer: DraftOffer<T> | null;
