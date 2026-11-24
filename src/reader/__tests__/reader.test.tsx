@@ -17,6 +17,7 @@ import {
   exchangeKept,
   exchangeNote,
   exchangeOf,
+  rateText,
   noEvidenceText,
   severalDocuments,
   AllowanceNote,
@@ -409,6 +410,13 @@ const EXCHANGE: Exchange = {
   date_basis: "receipt",
   source: "Frankfurter",
 };
+/** A currency weaker than the company's: under 1 HKD a unit, stored as Frankfurter gives it. */
+const PHP: Exchange = {
+  ...EXCHANGE,
+  original_currency: "PHP",
+  original_amount: "10000",
+  rate: "0.13456",
+};
 
 describe("an amount converted from another currency", () => {
   it("reads the API's exchange, and nothing that isn't one", () => {
@@ -442,15 +450,39 @@ describe("an amount converted from another currency", () => {
 
   it("says how it was converted, which way the rate runs, and why its day differs", () => {
     expect(convertedText(EXCHANGE, "HKD")).toBe(
-      "converted from USD\u00a012.34 at 1 USD = 7.846 HKD (13 Nov 2026 rate)",
+      "converted from USD\u00a012.34 at 1 USD = 7.85 HKD (13 Nov 2026 rate)",
     );
     // a Sunday's receipt: Friday's rate, and the page says why
     expect(convertedText({ ...EXCHANGE, asked_date: "2026-11-15" }, "HKD")).toBe(
-      "converted from USD\u00a012.34 at 1 USD = 7.846 HKD (13 Nov 2026 rate, the last business day before 15 Nov 2026)",
+      "converted from USD\u00a012.34 at 1 USD = 7.85 HKD (13 Nov 2026 rate, the last business day before 15 Nov 2026)",
     );
     expect(convertedText({ ...EXCHANGE, asked_date: "2026-11-13" }, "HKD")).toBe(
-      "converted from USD\u00a012.34 at 1 USD = 7.846 HKD (13 Nov 2026 rate)",
+      "converted from USD\u00a012.34 at 1 USD = 7.85 HKD (13 Nov 2026 rate)",
     );
+    // the weaker currency on the right (owner, 2026-11-24)
+    expect(convertedText({ ...PHP }, "HKD")).toBe(
+      "converted from PHP\u00a010,000.00 at 1 HKD = 7.43 PHP (13 Nov 2026 rate)",
+    );
+    // no company code: no rate at all, never a rate naming one currency
+    expect(convertedText(EXCHANGE)).toBe("converted from USD\u00a012.34 (13 Nov 2026 rate)");
+  });
+
+  it("writes a rate as 1 of the stronger currency, 2 decimals, rounded (owner, 2026-11-24)", () => {
+    // the stored rate is the company currency per 1 foreign unit; only the display flips
+    expect(rateText(EXCHANGE, "HKD")).toBe("1 USD = 7.85 HKD");
+    expect(rateText(PHP, "HKD")).toBe("1 HKD = 7.43 PHP");
+    expect(rateText({ ...EXCHANGE, original_currency: "KRW", rate: "0.0058306" }, "HKD")).toBe(
+      "1 HKD = 171.51 KRW",
+    );
+    expect(rateText({ ...EXCHANGE, rate: "1.3412" }, "SGD")).toBe("1 USD = 1.34 SGD");
+    expect(rateText({ ...EXCHANGE, original_currency: "IDR", rate: "0.00008" }, "SGD")).toBe(
+      "1 SGD = 12,500.00 IDR",
+    );
+    expect(rateText({ ...EXCHANGE, original_currency: "MOP", rate: "1" }, "HKD")).toBe(
+      "1 MOP = 1.00 HKD",
+    );
+    // the saved line keeps the rate at full precision
+    expect(exchangeFields(PHP).exchange_rate).toBe("0.13456");
   });
 
   it("the caution is one sentence, the same for a receipt, an invoice and a converted amount", () => {
@@ -458,12 +490,10 @@ describe("an amount converted from another currency", () => {
     expect(document.getElementById("c")).toHaveTextContent(/^AI suggestions may be inaccurate\.$/);
   });
 
-  it("notes the original amount and the rate after the description (owner, 2026-11-23)", () => {
-    // plain spaces: the description goes to Xero; the rate exactly as the API gives it
-    expect(exchangeNote({ ...EXCHANGE, original_amount: "10000", rate: "0.13456" })).toBe(
-      "(USD 10,000.00 @0.13456)",
-    );
-    expect(exchangeNote(EXCHANGE)).toBe("(USD 12.34 @7.846)");
+  it("notes the original amount and the rate, both currencies named (owner, 2026-11-24)", () => {
+    // plain spaces: the description goes to Xero
+    expect(exchangeNote(EXCHANGE, "HKD")).toBe("(USD 12.34 @ 1 USD = 7.85 HKD)");
+    expect(exchangeNote(PHP, "HKD")).toBe("(PHP 10,000.00 @ 1 HKD = 7.43 PHP)");
   });
 });
 

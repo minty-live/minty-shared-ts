@@ -234,7 +234,7 @@ suggestions (owner, 2026-11-04) - Petty Cash's Add New Expense and Payment Reque
   2026-11-19), an amount converted from another currency: `Exchange`, `exchangeOf` /
   `exchangeFailedOf` (the API's `exchange` / `exchange_failed`), `exchangeKept` (the field still
   holds the converted figure), `exchangeFields` (the six details by the saved line's column names),
-  `convertedText(exchange, code)` ("converted from USD 12.34 at 1 USD = 7.846 HKD (13 Nov 2026 rate)", plus ", the last business day before 15 Nov 2026" when a weekend or holiday moved the rate's day - the API's `asked_date`; the source stays on the line, not named to the person).
+  `convertedText(exchange, code)` ("converted from USD 12.34 at 1 USD = 7.85 HKD (13 Nov 2026 rate)", plus ", the last business day before 15 Nov 2026" when a weekend or holiday moved the rate's day - the API's `asked_date`; the source stays on the line, not named to the person).
 - v0.31 (owner's launch decisions, 2026-11-23, after IRD's "A Guide to Keeping Business
   Records"): a document that is not one record of a payment. `EVIDENCE_REASONS` /
   `evidenceRefusalOf(answer)` (`several_documents`, `no_description`; never `failureOf`'s quiet
@@ -244,6 +244,12 @@ suggestions (owner, 2026-11-04) - Petty Cash's Add New Expense and Payment Reque
   so this document isn't sufficient as a receipt. Please attach a receipt or invoice that shows
   the goods or services."; "an invoice" for Payment Request). `exchangeNote(exchange)` = "(USD
   35.00 @7.78)", added after the description (plain spaces; the rate as the API gives it).
+- v0.34 (owner, 2026-11-24): `rateText(exchange, code)` writes a rate as "1 {stronger} = n
+  {weaker}", n always 1 or more, 2 decimals rounded - "1 USD = 7.85 HKD", "1 HKD = 7.43 PHP",
+  "1 HKD = 171.51 KRW" - for any company currency. The stored rate (the company currency per 1
+  foreign unit, as the API gives it, `exchangeFields`) never changes; only the display flips.
+  `exchangeNote(exchange, code)` names both currencies: "(USD 35.00 @ 1 USD = 7.85 HKD)";
+  `convertedText` uses `rateText` too, and shows no rate without the company's code.
 
 Each app keeps its fields and words (minty-petty-cash-web `lib/expenseAi.ts`,
 minty-payment-request-web `lib/invoiceReader.ts`). Needs the `@source` line.

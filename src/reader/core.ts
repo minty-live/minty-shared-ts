@@ -390,24 +390,45 @@ export function exchangeFields(ex: Exchange): Record<string, string> {
   };
 }
 
-/**
- * Added after the description (owner, 2026-11-23): "(USD 35.00 @7.78)" - the original amount and
- * the rate exactly as the API gives it. Plain spaces: the description goes to Xero.
- */
-export function exchangeNote(ex: Exchange): string {
-  return `(${ex.original_currency} ${formatAmount(ex.original_amount, 2)} @${ex.rate})`;
+/** `value` to 2 places, half up on its decimal digits (never the float's binary tail), grouped. */
+function twoPlaces(value: number): string {
+  const rounded = Number(`${Math.round(Number(`${value}e2`))}e-2`);
+  return formatAmount(rounded.toFixed(2), 2);
 }
 
 /**
- * For the amount's suggested line: "converted from USD 12.34 at 1 USD = 7.846 HKD (13 Nov 2026
- * rate)" - which way the rate runs, and, when a weekend or holiday moved the rate's day back, why
- * (", the last business day before 15 Nov 2026"). `code` is the company's currency.
+ * A rate as people read it (owner, 2026-11-24): "1 {stronger} = n {weaker}", so n is always 1 or
+ * more - "1 USD = 7.85 HKD", "1 HKD = 7.43 PHP", "1 HKD = 171.51 KRW" - for any company currency,
+ * 2 decimals, rounded. The stored rate (`ex.rate`, the company currency per 1 foreign unit, as the
+ * API gives it) never changes; only the display flips.
+ */
+export function rateText(ex: Exchange, code: string): string {
+  const rate = Number(ex.rate);
+  return rate >= 1
+    ? `1 ${ex.original_currency} = ${twoPlaces(rate)} ${code}`
+    : `1 ${code} = ${twoPlaces(1 / rate)} ${ex.original_currency}`;
+}
+
+/**
+ * Added after the description: "(USD 35.00 @ 1 USD = 7.85 HKD)" - the original amount and the
+ * rate with both currencies named (owner, 2026-11-24; `rateText`). Plain spaces: the description
+ * goes to Xero. `code` is the company's currency.
+ */
+export function exchangeNote(ex: Exchange, code: string): string {
+  return `(${ex.original_currency} ${formatAmount(ex.original_amount, 2)} @ ${rateText(ex, code)})`;
+}
+
+/**
+ * For the amount's suggested line: "converted from USD 12.34 at 1 USD = 7.85 HKD (13 Nov 2026
+ * rate)" - the rate as `rateText` writes it, and, when a weekend or holiday moved the rate's day
+ * back, why (", the last business day before 15 Nov 2026"). `code` is the company's currency;
+ * without it no rate is shown (never one naming a single currency).
  */
 export function convertedText(ex: Exchange, code?: string | null): string {
-  const rate = code ? `1 ${ex.original_currency} = ${ex.rate} ${code}` : ex.rate;
+  const rate = code ? ` at ${rateText(ex, code)}` : "";
   const moved =
     ex.asked_date && ex.asked_date !== ex.rate_date
       ? `, the last business day before ${formatDay(ex.asked_date)}`
       : "";
-  return `converted from ${formatMoney(ex.original_amount, ex.original_currency, 2)} at ${rate} (${formatDay(ex.rate_date)} rate${moved})`;
+  return `converted from ${formatMoney(ex.original_amount, ex.original_currency, 2)}${rate} (${formatDay(ex.rate_date)} rate${moved})`;
 }
