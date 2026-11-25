@@ -1,6 +1,6 @@
 {
   "name": "@minty/shared",
-  "version": "0.36.0",
+  "version": "0.37.0",
   "description": "Minty's shared TypeScript: design tokens, the sidebar, the Part 14 primitives, and the modules every Next.js app had a copy of.",
   "license": "UNLICENSED",
   "type": "module",
@@ -48,6 +48,8 @@
     "./portal": "./src/lib/portal.ts",
     "./clientValue": "./src/lib/clientValue.ts",
     "./heic": "./src/lib/heic.ts",
+    "./filePreview": "./src/filePreview/index.ts",
+    "./pdfPreview": "./src/filePreview/PdfPreview.tsx",
     "./tsconfig.base.json": "./config/tsconfig.base.json",
     "./prettier": "./config/prettier.json",
     "./eslint": {
@@ -81,6 +83,7 @@
   },
   "peerDependencies": {
     "next": ">=16.4.2 <17",
+    "pdfjs-dist": "^4.10.38",
     "react": "^19.3.0",
     "react-dom": "^19.3.0"
   },
@@ -95,11 +98,17 @@
     "eslint-config-next": "16.4.2",
     "jsdom": "^30.1.3",
     "next": "16.4.2",
+    "pdfjs-dist": "^4.10.38",
     "prettier": "^3.9.10",
     "react": "19.3.1",
     "react-dom": "19.3.1",
     "typescript": "~6.0.3",
     "vite": "^8.3.5",
     "vitest": "^5.0.5"
+  },
+  "peerDependenciesMeta": {
+    "pdfjs-dist": {
+      "optional": true
+    }
   }
 }

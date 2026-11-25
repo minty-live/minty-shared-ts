@@ -5,6 +5,9 @@
 //
 // Plain .mjs: Next loads its config before it can transpile anything under node_modules.
 
+import { cpSync, existsSync, mkdirSync, rmSync } from "node:fs";
+import { join } from "node:path";
+
 /**
  * Sent with every response (the URL security round, 2026-10-05). Keep in step with Flask
  * (Minty pettycash/core/http_hardening.py).
@@ -44,4 +47,28 @@ export function withMintyDefaults(config = /** @type {T} */ ({})) {
       return [{ source: "/:path*", headers: securityHeaders() }, ...(own ? await own() : [])];
     },
   };
+}
+
+/**
+ * Copy pdf.js's runtime assets (the worker, cMaps, standard fonts) out of the app's installed
+ * `pdfjs-dist` into `public/pdfjs`, where `@minty/shared/pdfPreview` loads them same-origin -
+ * never from a third-party CDN (v0.37; lifted from minty-payment-request-web's next.config.ts).
+ * Call it at the top of next.config.ts: Node evaluates that file at the start of both `next dev`
+ * and `next build`, so the copy always matches the installed version. `public/pdfjs` is
+ * gitignored. An app without `pdfjs-dist` installed yet (a fresh clone before `npm ci`) is
+ * skipped; a failed copy stops the start, since every PDF preview would fail without it.
+ */
+export function copyPdfjsAssets(root = process.cwd()) {
+  const src = join(root, "node_modules", "pdfjs-dist");
+  if (!existsSync(src)) return;
+  const dest = join(root, "public", "pdfjs");
+  rmSync(dest, { recursive: true, force: true });
+  mkdirSync(dest, { recursive: true });
+  for (const [from, to] of [
+    ["build/pdf.worker.min.mjs", "pdf.worker.min.mjs"],
+    ["cmaps", "cmaps"],
+    ["standard_fonts", "standard_fonts"],
+  ]) {
+    cpSync(join(src, from), join(dest, to), { recursive: true });
+  }
 }

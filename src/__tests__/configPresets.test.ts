@@ -2,9 +2,13 @@
 // The config presets every app extends (config/*.mjs). Plain JS so Node, Next and Vitest can load
 // them from node_modules; checked here through their .d.mts types.
 
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+
 import { describe, expect, it } from "vitest";
 
-import { securityHeaders, withMintyDefaults } from "../../config/next.mjs";
+import { copyPdfjsAssets, securityHeaders, withMintyDefaults } from "../../config/next.mjs";
 import { mintyVitest } from "../../config/vitest.mjs";
 import * as refJs from "../../config/companyRef.mjs";
 import { credentials, mintModuleToken } from "../../config/e2e.mjs";
@@ -105,5 +109,38 @@ describe("config/e2e.mjs", () => {
     } finally {
       process.env = saved;
     }
+  });
+});
+
+describe("copyPdfjsAssets", () => {
+  const made = (root: string) => existsSync(join(root, "public", "pdfjs"));
+
+  it("copies the worker, cMaps and standard fonts into public/pdfjs, replacing what was there", () => {
+    const root = mkdtempSync(join(tmpdir(), "pdfjs-"));
+    const pkg = join(root, "node_modules", "pdfjs-dist");
+    mkdirSync(join(pkg, "build"), { recursive: true });
+    mkdirSync(join(pkg, "cmaps"));
+    mkdirSync(join(pkg, "standard_fonts"));
+    writeFileSync(join(pkg, "build", "pdf.worker.min.mjs"), "worker");
+    writeFileSync(join(pkg, "cmaps", "a.bcmap"), "c");
+    writeFileSync(join(pkg, "standard_fonts", "f.pfb"), "f");
+    mkdirSync(join(root, "public", "pdfjs"), { recursive: true });
+    writeFileSync(join(root, "public", "pdfjs", "stale.txt"), "old");
+
+    copyPdfjsAssets(root);
+
+    const out = join(root, "public", "pdfjs");
+    expect(readdirSync(out).sort()).toEqual(["cmaps", "pdf.worker.min.mjs", "standard_fonts"]);
+    expect(readdirSync(join(out, "cmaps"))).toEqual(["a.bcmap"]);
+    rmSync(root, { recursive: true, force: true });
+  });
+
+  it("does nothing before pdfjs-dist is installed", () => {
+    const root = mkdtempSync(join(tmpdir(), "pdfjs-"));
+
+    copyPdfjsAssets(root);
+
+    expect(made(root)).toBe(false);
+    rmSync(root, { recursive: true, force: true });
   });
 });
