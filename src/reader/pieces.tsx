@@ -7,8 +7,27 @@
  * text, never as markup.
  */
 
+import { outlineOf, type ReaderState } from "./core";
+
 /** The ring on a field holding an untouched suggestion (Flask's teal ring, in the Part 13 selected border). */
 export const SUGGESTED_RING = "ring-2 ring-border-selected ring-offset-1";
+
+/** A field a read left empty (the user, 2026-11-25): red, a warning only - saving is never blocked by it. */
+export const EMPTY_RING = "ring-2 ring-action-danger ring-offset-1";
+
+/** A suggestion to look at again (the user, 2026-11-25): the orange "Please check" outline. */
+export const CHECK_RING = "ring-2 ring-status-warning-ink ring-offset-1";
+
+/** The line under a field outlined orange. */
+export const PLEASE_CHECK = "Please check";
+
+const RINGS = { empty: EMPTY_RING, check: CHECK_RING, suggested: SUGGESTED_RING } as const;
+
+/** The ring for a field's outline (`outlineOf`), or "". */
+export function outlineRing<V, F extends string>(state: ReaderState<V, F>, field: F): string {
+  const outline = outlineOf(state, field);
+  return outline ? RINGS[outline] : "";
+}
 
 /** While the document is read (QA found 12px grey text was missed; the wait is seconds). */
 export function ReadingNotice({ title, detail }: { title: string; detail: string }) {
@@ -77,21 +96,25 @@ export function ReadButton({
 
 /**
  * Under a suggested field: the sparkle, the app's "<Field> suggested" text, and Clear. Its id goes
- * in the field's aria-describedby, so the line is read with the field.
+ * in the field's aria-describedby, so the line is read with the field. `tone="check"`: the field
+ * is outlined orange, and the line is in the warning ink (the user, 2026-11-25).
  */
 export function SuggestedLine({
   id,
   text,
   clearLabel,
   onClear,
+  tone = "suggested",
 }: {
   id: string;
   text: string;
   clearLabel: string;
   onClear: () => void;
+  tone?: "suggested" | "check";
 }) {
+  const ink = tone === "check" ? "text-status-warning-ink" : "text-text-link";
   return (
-    <div className="mt-1.5 flex flex-wrap items-center gap-x-1.5 text-sm text-text-link">
+    <div className={`mt-1.5 flex flex-wrap items-center gap-x-1.5 text-sm ${ink}`}>
       <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
         <path d="M12 2l2.4 6.2L21 10l-6.6 1.8L12 18l-2.4-6.2L3 10l6.6-1.8L12 2z" />
       </svg>

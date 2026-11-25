@@ -53,13 +53,12 @@ export const FAILURE_REASONS: readonly string[] = [
 ];
 
 /**
- * The model answered, but the document is not one record of a payment (owner, 2026-11-23, after
- * IRD's "A Guide to Keeping Business Records"): several receipts or invoices in the file, or
- * nothing describes what was paid for. Not failures: the form says why (`useDocumentReader`'s
- * `onRefused`), nothing is filled and the document stays.
+ * The model answered, but the file holds several receipts or invoices - the only refusal (the user,
+ * 2026-11-25; the description is not mandatory, so `no_description` is gone). Not a failure: the
+ * form says why (`useDocumentReader`'s `onRefused`), nothing is filled and the document stays.
  */
-export type EvidenceRefusal = "several_documents" | "no_description";
-export const EVIDENCE_REASONS: readonly EvidenceRefusal[] = ["several_documents", "no_description"];
+export type EvidenceRefusal = "several_documents";
+export const EVIDENCE_REASONS: readonly EvidenceRefusal[] = ["several_documents"];
 
 /** The answer's refusal, or null - only for an answer with no suggestions. */
 export function evidenceRefusalOf(answer: unknown): EvidenceRefusal | null {
@@ -73,16 +72,11 @@ export type ReadDocument = "receipt" | "invoice";
 
 const articled = (document: ReadDocument) => (document === "invoice" ? "an invoice" : "a receipt");
 
-/** The owner's draft (2026-11-23) for a document that doesn't say what was paid for. */
-export function noEvidenceText(document: ReadDocument): string {
-  return `We can't tell what this payment was for, so this document isn't sufficient as ${articled(document)}. Please attach a receipt or invoice that shows the goods or services.`;
-}
-
-/** The pop-up for several documents in one file (the owner's draft, 2026-11-23; "file", not "image": a PDF reads too). */
+/** The pop-up for several documents in one file (the user's words, 2026-11-25; "file", not "image": a PDF reads too). */
 export function severalDocuments(document: ReadDocument): { title: string; text: string } {
   return {
     title: `More than one ${document}`,
-    text: `This file contains more than one ${document}. Please upload each ${document} separately.`,
+    text: `This file seems to contain more than one ${document}. Please upload one ${document} per entry.`,
   };
 }
 
@@ -199,6 +193,13 @@ export type ReaderState<V, F extends string> = {
   detectedName: string | null;
   /** The one polite announcement of what the reading did ("" for nothing). */
   announcement: string;
+  /**
+   * After a read (the user, 2026-11-25; `outlined`): fields it left empty - the red outline, a
+   * warning only - and suggested fields to check - the orange "Please check" outline. Optional, so
+   * a state kept before them (an L1 draft) still reads.
+   */
+  empties?: Partial<Record<F, true>>;
+  checks?: Partial<Record<F, true>>;
 };
 
 /** What a form tells the rules about its own fields. */
@@ -240,13 +241,25 @@ export function edited<V, F extends string>(
   delete marks[field];
   delete notes[field];
   return {
-    ...state,
-    values,
-    marks,
-    notes,
-    touched,
+    ...without({ ...state, values, marks, notes, touched }, field, "empties", "checks"),
     detectedName: field === supplierField ? null : state.detectedName,
   };
+}
+
+/** `state` with `field` out of the named outline sets (each copied only when it holds the field). */
+function without<V, F extends string>(
+  state: ReaderState<V, F>,
+  field: F,
+  ...sets: ("empties" | "checks")[]
+): ReaderState<V, F> {
+  let next = state;
+  for (const key of sets) {
+    if (!state[key]?.[field]) continue;
+    const set = { ...state[key] };
+    delete set[field];
+    next = { ...next, [key]: set };
+  }
+  return next;
 }
 
 /** Clear: a suggested field goes back to blank or its default, unmarked (only for a field still marked). */
@@ -258,7 +271,11 @@ export function cleared<V, F extends string>(
   if (!state.marks[field]) return state;
   const marks = { ...state.marks };
   delete marks[field];
-  return { ...state, values: { ...state.values, ...spec.cleared(field) }, marks };
+  return without(
+    { ...state, values: { ...state.values, ...spec.cleared(field) }, marks },
+    field,
+    "checks",
+  );
 }
 
 /** "Use the value from the document": the note's value goes in, marked as suggested. */
@@ -270,12 +287,16 @@ export function usedNote<V, F extends string>(
   if (!note) return state;
   const notes = { ...state.notes };
   delete notes[field];
-  return {
-    ...state,
-    values: { ...state.values, ...note.fill },
-    marks: { ...state.marks, [field]: note.band },
-    notes,
-  };
+  return without(
+    {
+      ...state,
+      values: { ...state.values, ...note.fill },
+      marks: { ...state.marks, [field]: note.band },
+      notes,
+    },
+    field,
+    "empties",
+  );
 }
 
 /** The offered supplier name was taken to New Supplier (or set aside): the offer goes. */
@@ -297,7 +318,43 @@ export function withoutSuggestions<V, F extends string>(
   let values = { ...state.values };
   for (const field of Object.keys(state.marks) as F[])
     values = { ...values, ...spec.cleared(field) };
-  return { ...state, values, marks: {}, notes: {}, detectedName: null, announcement: "" };
+  return {
+    ...state,
+    values,
+    marks: {},
+    notes: {},
+    detectedName: null,
+    announcement: "",
+    empties: {},
+    checks: {},
+  };
+}
+
+/**
+ * The outlines after a read (the user, 2026-11-25), named by the form: `empty` - fields the read
+ * left empty (red, a warning only: never a gate on saving); `check` - suggested fields to look at
+ * again (orange, "Please check"), e.g. an inferred description and its account, or a supplier not
+ * on the list. A field to check that holds no suggestion is not outlined. Replaces earlier outlines.
+ */
+export function outlined<V, F extends string>(
+  state: ReaderState<V, F>,
+  { empty, check }: { empty: readonly NoInfer<F>[]; check: readonly NoInfer<F>[] },
+): ReaderState<V, F> {
+  const set = (fields: readonly F[]) =>
+    Object.fromEntries(fields.map((f) => [f, true])) as Partial<Record<F, true>>;
+  return { ...state, empties: set(empty), checks: set(check.filter((f) => state.marks[f])) };
+}
+
+/** A field's outline: red `empty`, orange `check`, teal `suggested`, or none. */
+export type Outline = "empty" | "check" | "suggested";
+
+export function outlineOf<V, F extends string>(
+  state: ReaderState<V, F>,
+  field: NoInfer<F>,
+): Outline | null {
+  if (state.empties?.[field]) return "empty";
+  if (!state.marks[field]) return null;
+  return state.checks?.[field] ? "check" : "suggested";
 }
 
 /**

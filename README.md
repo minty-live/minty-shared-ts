@@ -240,13 +240,20 @@ suggestions (owner, 2026-11-04) - Petty Cash's Add New Expense and Payment Reque
   `convertedText(exchange, code)` ("converted from USD 12.34 at 1 USD = 7.85 HKD (13 Nov 2026 rate)", plus ", the last business day before 15 Nov 2026" when a weekend or holiday moved the rate's day - the API's `asked_date`; the source stays on the line, not named to the person).
 - v0.31 (owner's launch decisions, 2026-11-23, after IRD's "A Guide to Keeping Business
   Records"): a document that is not one record of a payment. `EVIDENCE_REASONS` /
-  `evidenceRefusalOf(answer)` (`several_documents`, `no_description`; never `failureOf`'s quiet
-  line), `useDocumentReader`'s `onRefused(reason)`, and their words: `severalDocuments(document)`
-  (the pop-up's title and text, "This file contains more than one receipt. Please upload each
-  receipt separately.") and `noEvidenceText(document)` ("We can't tell what this payment was for,
-  so this document isn't sufficient as a receipt. Please attach a receipt or invoice that shows
-  the goods or services."; "an invoice" for Payment Request). `exchangeNote(exchange)` = "(USD
-  35.00 @7.78)", added after the description (plain spaces; the rate as the API gives it).
+  `evidenceRefusalOf(answer)` (`several_documents` only since v0.38 - `no_description` is gone;
+  never `failureOf`'s quiet line), `useDocumentReader`'s `onRefused(reason)`, and its words:
+  `severalDocuments(document)` (the pop-up's title and text, v0.38 the user's words: "This file
+  seems to contain more than one receipt. Please upload one receipt per entry."; "invoice" for
+  Payment Request). `exchangeNote(exchange)` = "(USD 35.00 @7.78)", added after the description
+  (plain spaces; the rate as the API gives it).
+- v0.38 (the user, 2026-11-25): the outlines after a read. `outlined(state, { empty, check })`
+  names the fields the read left empty (`EMPTY_RING`, red - a warning only, never a gate on
+  saving) and the suggested fields to look at again (`CHECK_RING`, orange - an inferred
+  description and its account, a supplier not on the list); `outlineOf(state, field)` /
+  `outlineRing(state, field)` give `empty`, `check`, `suggested` (`SUGGESTED_RING`, teal) or none,
+  and `SuggestedLine`'s `tone="check"` writes its line (`PLEASE_CHECK`) in the warning ink. An
+  edit takes a field's outline away, Clear its orange, a used note its red, and another document
+  all of them. `ReaderState.empties`/`checks` are optional, so an older L1 draft still reads.
 - v0.34 (owner, 2026-11-24): `rateText(exchange, code)` writes a rate as "1 {stronger} = n
   {weaker}", n always 1 or more, 2 decimals rounded - "1 USD = 7.85 HKD", "1 HKD = 7.43 PHP",
   "1 HKD = 171.51 KRW" - for any company currency. The stored rate (the company currency per 1

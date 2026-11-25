@@ -20,8 +20,13 @@ import {
   exchangeNote,
   exchangeOf,
   rateText,
-  noEvidenceText,
   severalDocuments,
+  CHECK_RING,
+  EMPTY_RING,
+  outlined,
+  outlineOf,
+  outlineRing,
+  PLEASE_CHECK,
   AllowanceNote,
   type Exchange,
   allowanceText,
@@ -200,7 +205,7 @@ describe("useDocumentReader", () => {
     // the user, 2026-11-24: a warning, never a refusal - the suggestions still fill
     const answers = [
       { suggestions: { amount: 1 }, reason: null, document_warning: "bank_payment_confirmation" },
-      { suggestions: null, reason: "no_description", document_warning: "other" },
+      { suggestions: null, reason: "several_documents", document_warning: "other" },
       { suggestions: { amount: 1 }, reason: null },
     ];
     const warned = vi.fn();
@@ -223,8 +228,8 @@ describe("useDocumentReader", () => {
   });
 
   it("hands a refused document to the form, never as the quiet failure line", async () => {
-    // owner, 2026-11-23: several documents in the file, or nothing describes the payment
-    for (const reason of ["several_documents", "no_description"]) {
+    // several documents in the file - the only refusal (the user, 2026-11-25)
+    for (const reason of ["several_documents"]) {
       const post = vi.fn().mockResolvedValue({ suggestions: null, reason });
       const refused = vi.fn();
       const got = vi.fn();
@@ -314,6 +319,19 @@ describe("the classic pieces", () => {
     expect(use).toHaveBeenCalledTimes(1);
     expect(screen.getByText('The invoice reads "<b>x</b>".')).toBeInTheDocument(); // text, never markup
     expect(SUGGESTED_RING).toBe("ring-2 ring-border-selected ring-offset-1");
+  });
+
+  it("draw a field to check in the warning ink", () => {
+    render(
+      <SuggestedLine
+        id="s2"
+        text="Please check"
+        tone="check"
+        clearLabel="Clear"
+        onClear={vi.fn()}
+      />,
+    );
+    expect(screen.getByText("Please check").parentElement).toHaveClass("text-status-warning-ink");
   });
 
   it("draw the caution under AI-filled fields: the owner's sentence, read with the form", () => {
@@ -557,34 +575,75 @@ describe("a document that may not be a receipt or invoice (the user, 2026-11-24)
   });
 });
 
-describe("a document that is not one record of a payment (owner, 2026-11-23)", () => {
-  it("reads the two refusals out of an answer, and nothing else", () => {
+describe("a file holding several documents - the only refusal (the user, 2026-11-25)", () => {
+  it("reads that refusal out of an answer, and nothing else", () => {
     expect(evidenceRefusalOf({ suggestions: null, reason: "several_documents" })).toBe(
       "several_documents",
     );
-    expect(evidenceRefusalOf({ suggestions: null, reason: "no_description" })).toBe(
-      "no_description",
-    );
+    // the description is not mandatory: an older API's refusal is no refusal here
+    expect(evidenceRefusalOf({ suggestions: null, reason: "no_description" })).toBeNull();
     expect(evidenceRefusalOf({ suggestions: null, reason: "timeout" })).toBeNull();
-    expect(evidenceRefusalOf({ suggestions: { a: 1 }, reason: "no_description" })).toBeNull();
+    expect(evidenceRefusalOf({ suggestions: { a: 1 }, reason: "several_documents" })).toBeNull();
     expect(evidenceRefusalOf(null)).toBeNull();
-    // neither is the quiet "couldn't read" line
+    // not the quiet "couldn't read" line
     expect(failureOf({ suggestions: null, reason: "several_documents" })).toBe(false);
-    expect(failureOf({ suggestions: null, reason: "no_description" })).toBe(false);
   });
 
-  it("says why, naming what was read", () => {
-    expect(noEvidenceText("receipt")).toBe(
-      "We can't tell what this payment was for, so this document isn't sufficient as a receipt. Please attach a receipt or invoice that shows the goods or services.",
-    );
-    expect(noEvidenceText("invoice")).toContain("isn't sufficient as an invoice.");
+  it("says why in the user's words, naming what was read", () => {
     expect(severalDocuments("receipt")).toEqual({
       title: "More than one receipt",
-      text: "This file contains more than one receipt. Please upload each receipt separately.",
+      text: "This file seems to contain more than one receipt. Please upload one receipt per entry.",
     });
     expect(severalDocuments("invoice")).toEqual({
       title: "More than one invoice",
-      text: "This file contains more than one invoice. Please upload each invoice separately.",
+      text: "This file seems to contain more than one invoice. Please upload one invoice per entry.",
     });
+  });
+});
+
+describe("the outlines after a read (the user, 2026-11-25)", () => {
+  const read = (): ReaderState<V, F> =>
+    outlined(
+      { ...start(), values: { date: "2026-10-20", amount: "" }, marks: { date: "medium" } },
+      { empty: ["amount"], check: ["date"] },
+    );
+
+  it("an empty field is red, a field to check orange, any other suggestion teal", () => {
+    const s = read();
+    expect(outlineOf(s, "amount")).toBe("empty");
+    expect(outlineOf(s, "date")).toBe("check");
+    expect(outlineRing(s, "amount")).toBe(EMPTY_RING);
+    expect(outlineRing(s, "date")).toBe(CHECK_RING);
+    const teal = outlined(s, { empty: [], check: [] });
+    expect(outlineOf(teal, "date")).toBe("suggested");
+    expect(outlineRing(teal, "date")).toBe(SUGGESTED_RING);
+    expect(outlineOf(start(), "date")).toBeNull();
+    expect(outlineRing(start(), "date")).toBe("");
+    expect(EMPTY_RING).toBe("ring-2 ring-action-danger ring-offset-1");
+    expect(CHECK_RING).toBe("ring-2 ring-status-warning-ink ring-offset-1");
+    expect(PLEASE_CHECK).toBe("Please check");
+  });
+
+  it("only a suggested field is outlined to check", () => {
+    const s = outlined(start(), { empty: [], check: ["date"] });
+    expect(outlineOf(s, "date")).toBeNull();
+  });
+
+  it("an edit takes the outline away; Clear takes the orange; a used note the red", () => {
+    const s = read();
+    expect(outlineOf(edited(s, "amount", { amount: "12" }, SPEC), "amount")).toBeNull();
+    expect(outlineOf(edited(s, "date", { date: "2026-10-21" }, SPEC), "date")).toBeNull();
+    expect(outlineOf(cleared(s, "date", SPEC), "date")).toBeNull();
+    const noted: ReaderState<V, F> = {
+      ...s,
+      notes: { amount: { text: "x", fill: { amount: "50" }, band: "medium" } },
+    };
+    expect(outlineOf(usedNote(noted, "amount"), "amount")).toBe("suggested");
+  });
+
+  it("another document takes every outline back", () => {
+    const fresh = withoutSuggestions(read(), SPEC);
+    expect(outlineOf(fresh, "amount")).toBeNull();
+    expect(outlineOf(fresh, "date")).toBeNull();
   });
 });
