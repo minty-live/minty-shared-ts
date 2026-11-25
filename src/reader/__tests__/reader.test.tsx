@@ -312,7 +312,20 @@ describe("the classic pieces", () => {
       "I couldn't read this invoice. Enter the details yourself.",
     ]);
     const button = screen.getByRole("button", { name: "Clear the suggested value for this field" });
-    expect(button).toHaveClass("min-h-11", "min-w-11");
+    // the phone wrap (the user, 2026-11-25): Clear follows the sentence in one text block, so a
+    // long line wraps as words, never the sparkle or Clear alone on a line
+    const sentence = screen.getByText("Suggested from the invoice. Check it before you submit.");
+    expect(sentence.parentElement).toBe(button.parentElement);
+    expect(sentence.parentElement).toHaveClass("min-w-0");
+    expect(button).toHaveClass("whitespace-nowrap");
+    // 44px to tap (20px line + 4 above + 20 below; 36 + 8 + 8 wide), never over the field above
+    expect(button).toHaveClass(
+      "relative",
+      "before:absolute",
+      "before:-top-1",
+      "before:-bottom-5",
+      "before:-inset-x-2",
+    );
     await userEvent.click(button);
     await userEvent.click(screen.getByRole("button", { name: "Use the value from the invoice" }));
     expect(clear).toHaveBeenCalledTimes(1);
@@ -331,7 +344,7 @@ describe("the classic pieces", () => {
         onClear={vi.fn()}
       />,
     );
-    expect(screen.getByText("Please check").parentElement).toHaveClass("text-status-warning-ink");
+    expect(screen.getByText("Please check").closest("div")).toHaveClass("text-status-warning-ink");
   });
 
   it("draw the caution under AI-filled fields: the owner's sentence, read with the form", () => {

@@ -225,6 +225,9 @@ suggestions (owner, 2026-11-04) - Petty Cash's Add New Expense and Payment Reque
   `onSuggestions` returning false because nothing was shown).
 - The classic-look pieces (v0.23: in the `colors.css` roles): `ReadingNotice`, `SuggestedLine`, `ReaderNote`,
   `ReadFailedLine`, `SUGGESTED_RING`, and (v0.22) `ReadButton`. Each app passes its own words.
+  `SuggestedLine` (2026-11-25, the user): the sparkle at the start, the sentence wrapping beside it
+  and Clear after its last word, so a phone never puts the sparkle or Clear on a line alone; Clear's
+  44px tap area is its `::before` (4px up, so it never covers the field above, 20px down).
 - v0.22 (owner, 2026-11-18): a document is read only when the person presses `ReadButton`
   ("Read the receipt", "Read the invoice") - never on attaching it. Each app shows the button once
   a readable file is attached, the API says the reader is switched on, and that file has not been

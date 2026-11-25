@@ -113,20 +113,30 @@ export function SuggestedLine({
   tone?: "suggested" | "check";
 }) {
   const ink = tone === "check" ? "text-status-warning-ink" : "text-text-link";
+  // The sparkle stays at the start and the sentence wraps beside it, with Clear after its last word
+  // (the user, 2026-11-25: on a phone the sparkle and Clear each took a line of their own). Clear's
+  // 44px tap area is its ::before - 4px up, so it never covers the field above, 20px down.
   return (
-    <div className={`mt-1.5 flex flex-wrap items-center gap-x-1.5 text-sm ${ink}`}>
-      <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <div className={`mt-1.5 flex items-start gap-x-1.5 text-sm ${ink}`}>
+      <svg
+        className="mt-0.5 h-4 w-4 shrink-0"
+        viewBox="0 0 24 24"
+        fill="currentColor"
+        aria-hidden="true"
+      >
         <path d="M12 2l2.4 6.2L21 10l-6.6 1.8L12 18l-2.4-6.2L3 10l6.6-1.8L12 2z" />
       </svg>
-      <span id={id}>{text}</span>
-      <button
-        type="button"
-        onClick={onClear}
-        aria-label={clearLabel}
-        className="min-h-11 min-w-11 cursor-pointer font-medium underline hover:no-underline"
-      >
-        Clear
-      </button>
+      <p className="min-w-0 break-words">
+        <span id={id}>{text}</span>{" "}
+        <button
+          type="button"
+          onClick={onClear}
+          aria-label={clearLabel}
+          className="relative cursor-pointer whitespace-nowrap font-medium underline before:absolute before:-inset-x-2 before:-top-1 before:-bottom-5 hover:no-underline"
+        >
+          Clear
+        </button>
+      </p>
     </div>
   );
 }
