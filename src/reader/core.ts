@@ -128,6 +128,75 @@ export function failureOf(answer: unknown): boolean {
 }
 
 // ---------------------------------------------------------------------------------------------
+// What a failed read tells the person (the user, 2026-11-26)
+
+/**
+ * A read that came back with nothing, by what the person can do about it:
+ *   unreadable   the model erred, timed out, replied unusably, or the connection dropped -> try again
+ *   busy         rate limited                                                       -> try again later
+ *   too_large    the file is over the company's limit                               -> nothing to retry
+ *   unavailable  the reader is off, not set up, or the company has no lists yet     -> nothing to retry
+ * (Before 2026-11-26 every one was the same quiet line, and the last was silence.)
+ */
+export type ReadFailureKind = "unreadable" | "busy" | "too_large" | "unavailable";
+export type ReadFailure = { kind: ReadFailureKind; maxFileMb: number | null };
+
+/** The person may press Try again this many times for one document (the user, 2026-11-26). */
+export const MAX_READ_RETRIES = 2;
+
+/** Failures a second try can mend. */
+export const RETRYABLE_FAILURES: readonly ReadFailureKind[] = ["unreadable", "busy"];
+
+/** The reader is not there for this company: off, not set up, or nothing to choose from. */
+export const UNAVAILABLE_REASONS: readonly string[] = [...READER_OFF_REASONS, "no_context"];
+
+/** The limit when an answer does not name one (`ai_policy.max_file_mb`'s default). */
+const DEFAULT_MAX_FILE_MB = 10;
+
+/**
+ * The answer's failure, or null: an answer with suggestions, the allowance used up
+ * (`limit_reached`, which the button's note says), a refusal (`several_documents`), or a reason
+ * this side does not know are never one. No answer at all (a cut connection) is `unreadable`.
+ */
+export function readFailureOf(answer: unknown): ReadFailure | null {
+  if (suggestionsOf(answer)) return null;
+  const body = answer && typeof answer === "object" ? (answer as Record<string, unknown>) : {};
+  const reason = body.reason;
+  const max = typeof body.max_file_mb === "number" ? body.max_file_mb : null;
+  if (typeof reason !== "string") return { kind: "unreadable", maxFileMb: null };
+  if (reason === "rate_limited") return { kind: "busy", maxFileMb: null };
+  if (reason === "file_too_large") return { kind: "too_large", maxFileMb: max };
+  if (UNAVAILABLE_REASONS.includes(reason)) return { kind: "unavailable", maxFileMb: null };
+  if (FAILURE_REASONS.includes(reason)) return { kind: "unreadable", maxFileMb: null };
+  return null;
+}
+
+/**
+ * The sentence for a failure (the user's words, 2026-11-26). Once the tries are used up, the
+ * sentence no longer offers one.
+ */
+export function readFailureText(
+  failure: ReadFailure,
+  document: ReadDocument,
+  canRetry: boolean,
+): string {
+  switch (failure.kind) {
+    case "unreadable":
+      return canRetry
+        ? `Minty couldn't read this ${document}. Please try again or fill in the details.`
+        : `Minty couldn't read this ${document}. Please fill in the details.`;
+    case "busy":
+      return canRetry
+        ? "Minty is busy. Please try again in a minute."
+        : "Minty is busy. Please fill in the details.";
+    case "too_large":
+      return `This file is too large (max ${failure.maxFileMb ?? DEFAULT_MAX_FILE_MB} MB).`;
+    case "unavailable":
+      return "Minty isn't available for this company yet.";
+  }
+}
+
+// ---------------------------------------------------------------------------------------------
 // The session latch
 
 export type ReaderLatch = {

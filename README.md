@@ -221,13 +221,39 @@ suggestions (owner, 2026-11-04) - Petty Cash's Add New Expense and Payment Reque
   `usedNote`, `withoutSuggestions`, `fillable`). Never overwrite the person; a field still at its
   untouched default counts as empty (`touched`; `touchOnSame` for a form with defaults).
 - `useDocumentReader({ post, field, latch, onSuggestions })`: one read at a time, cancellable, and
-  `failed` - the one quiet failure line's switch (a failure reason, a cut connection, or
+  `failed` - set when a read came back with nothing (a failure reason, a cut connection, or
   `onSuggestions` returning false because nothing was shown).
+- v0.41 (the user, 2026-11-26): a failed read says why, by `failure.kind` (`readFailureOf`):
+  `unreadable` (model error, timeout, bad reply, cut connection) "Minty couldn't read this
+  receipt. Please try again or fill in the details."; `busy` (rate limited) "Minty is busy.
+  Please try again in a minute."; `too_large` "This file is too large (max N MB)." (N = the API's
+  `max_file_mb`, else 10); `unavailable` (reader off, not set up, or `no_context`) "Minty isn't
+  available for this company yet." - the last two used to be silence (owner, 2026-11-04).
+  `readFailureText(failure, document, canRetry)` words it; `ReadFailedNotice({ text, onRetry,
+onManual })` draws it (a status, never an alert) with "Try again" (`TRY_AGAIN`) while
+  `canRetry` (unreadable or busy, at most `MAX_READ_RETRIES` = 2 per document; `retry()` reads
+  the same file again, a new `read(file)` starts the count again) and "Fill in manually"
+  (`FILL_IN_MANUALLY`, `dismiss()`). Each app shows its Read button only before the first press
+  for a file: the notice carries the tries. `ReadFailedLine` stays for the photo and document
+  warnings. "Minty", never "Minty AI", in every reader sentence (the user, same day).
+- v0.41 (the user, 2026-11-26): the reading cat, `ReadingCat({ size, document })` - Minty at her
+  laptop in a silent loop while a document is read (in place of `ReadingNotice`), gone the moment
+  the answer or an error arrives. `readingCatSize(status)`: `large` (a white card, the cat up to
+  240px, "Minty is reading your receipt…") before a person's first answered read and for 24 hours
+  after it (`ReaderStatus.first_read_at`, which the APIs work out from `ai_read`; minty-shared-py
+  v0.27), `small` ("Reading…") after - the same cat, only the words change. Reduce motion: the still frame. The files
+  (`READING_CAT_ASSETS`: `/reader/minty-reading.webm` VP9 ~140 KB, `.mp4` baseline H.264 ~170 KB
+  for Safari without VP9, `minty-reading-still.webp`) are each app's to serve from `public/reader/`.
+  Both apps draw it with `place="zone"` IN the upload box's place while reading (the user, same
+  day) - the box's height - and bring the box back after.
 - The classic-look pieces (v0.23: in the `colors.css` roles): `ReadingNotice`, `SuggestedLine`, `ReaderNote`,
   `ReadFailedLine`, `SUGGESTED_RING`, and (v0.22) `ReadButton`. Each app passes its own words.
   `SuggestedLine` (2026-11-25, the user): the sparkle at the start, the sentence wrapping beside it
   and Clear after its last word, so a phone never puts the sparkle or Clear on a line alone; Clear's
   44px tap area is its `::before` (4px up, so it never covers the field above, 20px down).
+- v0.41 (the user, 2026-11-26): both apps read a document as soon as it is attached (when
+  `canRead(status)`), with no `ReadButton` (still exported, unused); the same file is never read
+  again except by a failure message's Try again. Before:
 - v0.22 (owner, 2026-11-18): a document is read only when the person presses `ReadButton`
   ("Read the receipt", "Read the invoice") - never on attaching it. Each app shows the button once
   a readable file is attached, the API says the reader is switched on, and that file has not been

@@ -37,7 +37,21 @@ import {
   edited,
   failureOf,
   fillable,
+  FILL_IN_MANUALLY,
+  MAX_READ_RETRIES,
   ReadButton,
+  ReadFailedNotice,
+  readFailureOf,
+  readFailureText,
+  TRY_AGAIN,
+  LARGE_READING_CAT_MS,
+  READING_CAT_ASSETS,
+  READING_CAT_MP4,
+  READING_CAT_STILL,
+  READING_CAT_WEBM,
+  ReadingCat,
+  readingCatSize,
+  readingCatText,
   ReaderNote,
   readerState,
   readerStatusOf,
@@ -85,6 +99,46 @@ describe("the answer", () => {
       expect(failureOf({ suggestions: null, reason })).toBe(false);
     expect(failureOf({ suggestions: { amount: {} }, reason: "no_usable_field" })).toBe(false);
     expect(failureOf(null)).toBe(true);
+  });
+
+  it("names what went wrong by what the person can do (the user, 2026-11-26)", () => {
+    const kind = (answer: unknown) => readFailureOf(answer)?.kind ?? null;
+    for (const reason of ["timeout", "provider_error", "invalid_reply", "truncated"])
+      expect(kind({ suggestions: null, reason })).toBe("unreadable");
+    expect(kind(null)).toBe("unreadable"); // no answer at all
+    expect(kind({ suggestions: null, reason: "rate_limited" })).toBe("busy");
+    expect(readFailureOf({ suggestions: null, reason: "file_too_large", max_file_mb: 8 })).toEqual({
+      kind: "too_large",
+      maxFileMb: 8,
+    });
+    for (const reason of ["disabled", "not_configured", "no_context"])
+      expect(kind({ suggestions: null, reason })).toBe("unavailable");
+    // never a failure: suggestions, the allowance used up, a refusal, a reason we don't know
+    expect(kind({ suggestions: { amount: {} }, reason: null })).toBeNull();
+    for (const reason of ["limit_reached", "several_documents", "something_new"])
+      expect(kind({ suggestions: null, reason })).toBeNull();
+  });
+
+  it("says each failure in the user's words, and stops offering a try once none is left", () => {
+    const unreadable = { kind: "unreadable", maxFileMb: null } as const;
+    expect(readFailureText(unreadable, "receipt", true)).toBe(
+      "Minty couldn't read this receipt. Please try again or fill in the details.",
+    );
+    expect(readFailureText(unreadable, "invoice", false)).toBe(
+      "Minty couldn't read this invoice. Please fill in the details.",
+    );
+    expect(readFailureText({ kind: "busy", maxFileMb: null }, "receipt", true)).toBe(
+      "Minty is busy. Please try again in a minute.",
+    );
+    expect(readFailureText({ kind: "too_large", maxFileMb: null }, "receipt", false)).toBe(
+      "This file is too large (max 10 MB).",
+    );
+    expect(readFailureText({ kind: "too_large", maxFileMb: 8 }, "invoice", false)).toBe(
+      "This file is too large (max 8 MB).",
+    );
+    expect(readFailureText({ kind: "unavailable", maxFileMb: null }, "receipt", false)).toBe(
+      "Minty isn't available for this company yet.",
+    );
   });
 });
 
@@ -250,16 +304,72 @@ describe("useDocumentReader", () => {
     }
   });
 
-  it("says nothing when switched off, and never reads again that session", async () => {
+  it("says it isn't available when switched off, and never reads again that session", async () => {
+    // the user, 2026-11-26: it used to say nothing
     const l = latch();
     const post = vi.fn().mockResolvedValue({ suggestions: null, reason: "disabled" });
     const { result } = renderHook(() =>
       useDocumentReader({ post, field: "f", latch: l, onSuggestions: () => true }),
     );
     await act(() => result.current.read(file));
-    expect(result.current.failed).toBe(false);
+    expect(result.current.failure?.kind).toBe("unavailable");
+    expect(result.current.canRetry).toBe(false);
     await act(() => result.current.read(file));
     expect(post).toHaveBeenCalledTimes(1);
+  });
+
+  it("lets the person try the same document twice more, then no more", async () => {
+    const post = vi.fn().mockResolvedValue({ suggestions: null, reason: "timeout" });
+    const { result } = renderHook(() =>
+      useDocumentReader({ post, field: "f", latch: latch(), onSuggestions: () => true }),
+    );
+    await act(() => result.current.read(file));
+    for (let left = MAX_READ_RETRIES; left > 0; left -= 1) {
+      expect(result.current).toMatchObject({ canRetry: true, retriesLeft: left });
+      await act(() => result.current.retry());
+    }
+    expect(post).toHaveBeenCalledTimes(1 + MAX_READ_RETRIES);
+    expect(result.current).toMatchObject({ canRetry: false, retriesLeft: 0, failed: true });
+    await act(() => result.current.retry()); // nothing left: no call
+    expect(post).toHaveBeenCalledTimes(1 + MAX_READ_RETRIES);
+    expect((post.mock.calls[2][0] as FormData).get("f")).toBeInstanceOf(File); // the same document
+  });
+
+  it("offers a try when busy, never when the file is too large", async () => {
+    for (const [reason, retryable] of [
+      ["rate_limited", true],
+      ["file_too_large", false],
+    ] as const) {
+      const post = vi.fn().mockResolvedValue({ suggestions: null, reason });
+      const { result } = renderHook(() =>
+        useDocumentReader({ post, field: "f", latch: latch(), onSuggestions: () => true }),
+      );
+      await act(() => result.current.read(file));
+      expect(result.current.canRetry).toBe(retryable);
+    }
+  });
+
+  it("a retry that reads clears the message; Fill in manually puts it away", async () => {
+    const post = vi
+      .fn()
+      .mockResolvedValueOnce({ suggestions: null, reason: "provider_error" })
+      .mockResolvedValueOnce({ suggestions: { amount: 1 }, reason: null });
+    const got = vi.fn();
+    const { result } = renderHook(() =>
+      useDocumentReader({ post, field: "f", latch: latch(), onSuggestions: got }),
+    );
+    await act(() => result.current.read(file));
+    await act(() => result.current.retry());
+    expect(got).toHaveBeenCalledWith({ amount: 1 });
+    expect(result.current.failure).toBeNull();
+
+    const failing = vi.fn().mockResolvedValue({ suggestions: null, reason: "timeout" });
+    const second = renderHook(() =>
+      useDocumentReader({ post: failing, field: "f", latch: latch(), onSuggestions: got }),
+    );
+    await act(() => second.result.current.read(file));
+    act(() => second.result.current.dismiss());
+    expect(second.result.current.failed).toBe(false);
   });
 
   it("drops an answer for a document no longer there", async () => {
@@ -285,6 +395,27 @@ describe("useDocumentReader", () => {
 });
 
 describe("the classic pieces", () => {
+  it("say why a read failed, with Try again only while one is left (the user, 2026-11-26)", async () => {
+    const retry = vi.fn();
+    const manual = vi.fn();
+    const text = "Minty couldn't read this receipt. Please try again or fill in the details.";
+    const { rerender } = render(<ReadFailedNotice text={text} onRetry={retry} onManual={manual} />);
+    const status = screen.getByRole("status"); // polite, never an alert
+    expect(status).toHaveTextContent(text);
+    const again = within(status).getByRole("button", { name: TRY_AGAIN });
+    const fill = within(status).getByRole("button", { name: FILL_IN_MANUALLY });
+    for (const b of [again, fill]) expect(b).toHaveClass("min-h-11"); // 44px to tap
+    await userEvent.click(again);
+    await userEvent.click(fill);
+    expect(retry).toHaveBeenCalledTimes(1);
+    expect(manual).toHaveBeenCalledTimes(1);
+    rerender(
+      <ReadFailedNotice text="Minty is busy. Please fill in the details." onManual={manual} />,
+    );
+    expect(screen.queryByRole("button", { name: TRY_AGAIN })).toBeNull();
+    expect(screen.getByRole("button", { name: FILL_IN_MANUALLY })).toBeInTheDocument();
+  });
+
   it("draw the app's words, a 44px Clear and a polite failure line", async () => {
     const clear = vi.fn();
     const use = vi.fn();
@@ -390,13 +521,12 @@ describe("the AI allowance", () => {
     resumes_at: null,
   };
 
-  it("says how much of the allowance is left", () => {
-    expect(allowanceText(open)).toBe("80% of your AI allowance left");
+  it("says nothing about how much is left while there is room (the user, 2026-11-26)", () => {
+    expect(allowanceText(open)).toBeNull();
+    expect(allowanceText({ enabled: true, reads_left: 7, reads_limit: 10 })).toBeNull();
     expect(canRead(open)).toBe(true);
-  });
-
-  it("falls back to a count of reads from an API that sends no percent", () => {
-    expect(allowanceText({ enabled: true, reads_left: 7, reads_limit: 10 })).toBe("7 of 10 left");
+    render(<AllowanceNote id="ai-left" status={open} />);
+    expect(screen.queryByText(/allowance left| left$/)).toBeNull();
   });
 
   it("says nothing when the reader is off or the API sends no count", () => {
@@ -682,5 +812,93 @@ describe("the outlines after a read (the user, 2026-11-25)", () => {
     const fresh = withoutSuggestions(read(), SPEC);
     expect(outlineOf(fresh, "amount")).toBeNull();
     expect(outlineOf(fresh, "date")).toBeNull();
+  });
+});
+
+describe("the reading cat (the user, 2026-11-26)", () => {
+  const NOW = Date.parse("2026-11-26T12:00:00Z");
+  const hoursAgo = (h: number) => new Date(NOW - h * 3600 * 1000).toISOString();
+
+  it("is large before a person's first read and for a day after it, small from then on", () => {
+    expect(readingCatSize(null, NOW)).toBe("large");
+    expect(readingCatSize({ enabled: true }, NOW)).toBe("large");
+    expect(readingCatSize({ enabled: true, first_read_at: null }, NOW)).toBe("large");
+    expect(readingCatSize({ enabled: true, first_read_at: hoursAgo(23) }, NOW)).toBe("large");
+    expect(readingCatSize({ enabled: true, first_read_at: hoursAgo(25) }, NOW)).toBe("small");
+    expect(LARGE_READING_CAT_MS).toBe(24 * 3600 * 1000);
+  });
+
+  it("says Minty, never Minty AI", () => {
+    expect(readingCatText("large", "receipt")).toBe("Minty is reading your receipt…");
+    expect(readingCatText("large", "invoice")).toBe("Minty is reading your invoice…");
+    expect(readingCatText("small", "invoice")).toBe("Reading…");
+  });
+
+  it("lists every file it draws, for each app to serve", () => {
+    expect(READING_CAT_ASSETS).toEqual([READING_CAT_WEBM, READING_CAT_MP4, READING_CAT_STILL]);
+  });
+
+  it("plays a silent loop - WebM, then MP4 for Safari - with the words as the status", () => {
+    const { container } = render(<ReadingCat size="large" document="receipt" />);
+    const status = screen.getByRole("status");
+    expect(status).toHaveTextContent("Minty is reading your receipt…");
+    const video = container.querySelector("video")!;
+    expect(video).toHaveAttribute("aria-hidden", "true");
+    expect(video.loop && video.autoplay && video.muted).toBe(true);
+    expect(video).toHaveAttribute("muted"); // iOS autoplays only a muted video
+    expect(video).toHaveAttribute("playsinline");
+    expect(video).toHaveAttribute("poster", READING_CAT_STILL);
+    expect([...video.querySelectorAll("source")].map((s) => [s.src, s.type])).toEqual([
+      [expect.stringContaining(READING_CAT_WEBM), "video/webm"],
+      [expect.stringContaining(READING_CAT_MP4), "video/mp4"],
+    ]);
+  });
+
+  it("after the first day is the same cat, saying only Reading… (the user, 2026-11-26)", () => {
+    const later = render(<ReadingCat size="small" document="invoice" />);
+    expect(screen.getByRole("status")).toHaveTextContent(/^Reading…$/);
+    const laterCat = later.container.querySelector("video")!.className;
+    later.unmount();
+    const first = render(<ReadingCat size="large" document="invoice" />);
+    expect(first.container.querySelector("video")!.className).toBe(laterCat); // no size difference
+  });
+
+  it("shows the still frame when the device asks for less motion", () => {
+    const original = window.matchMedia;
+    window.matchMedia = vi.fn().mockReturnValue({
+      matches: true,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    }) as unknown as typeof window.matchMedia;
+    try {
+      const { container } = render(<ReadingCat size="large" document="receipt" />);
+      expect(container.querySelector("video")).toBeNull();
+      expect(container.querySelector("img")).toHaveAttribute("src", READING_CAT_STILL);
+      expect(screen.getByRole("status")).toHaveTextContent("Minty is reading your receipt…");
+    } finally {
+      window.matchMedia = original;
+    }
+  });
+});
+
+describe("the reading cat in the upload box's place (the user, 2026-11-26)", () => {
+  it("fills the slot with no margins, at least the box's height, with the app's own sizes", () => {
+    render(
+      <ReadingCat size="large" document="invoice" place="zone" className="sm:min-h-[176px]" />,
+    );
+    const status = screen.getByRole("status");
+    expect(status).toHaveClass("min-h-[156px]", "w-full", "sm:min-h-[176px]");
+    expect(status).not.toHaveClass("mt-3");
+    expect(status).toHaveTextContent("Minty is reading your invoice…");
+  });
+});
+
+describe("the reading cat after the first day, in the upload box's place (the user, 2026-11-26)", () => {
+  it("after the first day fills the box the same way, saying Reading…", () => {
+    const { container } = render(<ReadingCat size="small" document="receipt" place="zone" />);
+    const status = screen.getByRole("status");
+    expect(status).toHaveClass("min-h-[156px]", "w-full", "justify-center");
+    expect(status).toHaveTextContent(/^Reading…$/);
+    expect(container.querySelector("video")).toHaveClass("max-w-[240px]");
   });
 });

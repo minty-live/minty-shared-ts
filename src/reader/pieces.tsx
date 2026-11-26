@@ -94,7 +94,7 @@ export function ReadButton({
   onClick: () => void;
   /** The company's AI reads are used up (owner, 2026-11-18): the reason sits beside it. */
   disabled?: boolean;
-  /** The id of the allowance line beside the button (`AllowanceNote`). */
+  /** The id of the reason beside a disabled button (`AllowanceNote`; nothing while open). */
   describedBy?: string;
 }) {
   return (
@@ -198,6 +198,53 @@ export function ReadFailedLine({ text }: { text: string }) {
     </p>
   );
 }
+
+/**
+ * Why a read came back with nothing, and what to do (the user, 2026-11-26): the sentence
+ * (`readFailureText`), "Try again" while the document has tries left (`useDocumentReader`'s
+ * `canRetry`), and "Fill in manually", which puts the message away. A status, never an alert - the
+ * form works as before. The "Reading..." notice is gone by then (it shows only while reading).
+ */
+export function ReadFailedNotice({
+  text,
+  onRetry,
+  onManual,
+}: {
+  text: string;
+  /** Omitted when no try is left or a try cannot help (too large, not available). */
+  onRetry?: () => void;
+  onManual: () => void;
+}) {
+  return (
+    <div
+      role="status"
+      className="mb-1 mt-3 rounded-[12px] border border-border-default bg-surface-sunk px-4 py-3"
+    >
+      <p className="break-words text-sm text-text-secondary">{text}</p>
+      <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
+        {onRetry ? (
+          <button
+            type="button"
+            onClick={onRetry}
+            className="inline-flex min-h-11 cursor-pointer items-center rounded-[12px] border border-action-secondary-border bg-surface-card px-4 text-sm font-semibold text-action-secondary-text hover:bg-state-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
+          >
+            {TRY_AGAIN}
+          </button>
+        ) : null}
+        <button
+          type="button"
+          onClick={onManual}
+          className="min-h-11 cursor-pointer text-left text-sm font-medium text-text-link underline hover:no-underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus"
+        >
+          {FILL_IN_MANUALLY}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export const TRY_AGAIN = "Try again";
+export const FILL_IN_MANUALLY = "Fill in manually";
 
 /**
  * The owner's caution, in both apps (Petty Cash expense, Payment Request bill): under the fields

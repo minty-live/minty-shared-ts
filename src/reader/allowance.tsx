@@ -3,9 +3,10 @@
  * one-time grant on its first read, top-ups given by hand), shared by Petty Cash's receipts and
  * Payment Request's invoices, kept by the APIs (minty-shared-py's `ai_allowance`, minty-db's
  * `ai_policy`/`ai_grant`/`ai_read`). The page learns where it stands from the reader status its
- * API sends - on page load (`reader`) and after every read (the answer's `reader`) - and shows it
- * beside the read button: "80% of your AI allowance left", or, once used up, the button disabled
- * with the reason beside it. Only a read a model answered counts; a failed one does not.
+ * API sends - on page load (`reader`) and after every read (the answer's `reader`). Once used up,
+ * the read button is disabled with the reason beside it; while there is room nothing is shown (the
+ * user, 2026-11-26: no "80% of your AI allowance left"). Only a read a model answered counts; a
+ * failed one does not.
  */
 
 /** What an API sends as `reader`. A switched-off reader sends `{enabled: false}` alone. */
@@ -20,6 +21,11 @@ export type ReaderStatus = {
   blocked?: boolean;
   /** When a rolling window next has room (ISO); null = used up for good. */
   resumes_at?: string | null;
+  /**
+   * When the signed-in person's first read was answered (ISO), any company; null = never. Sizes
+   * the reading cat (`readingCatSize`; the user, 2026-11-26).
+   */
+  first_read_at?: string | null;
 };
 
 /** The `reader` of an extract answer or a page payload, when it has the shape. */
@@ -44,28 +50,21 @@ function shortDate(iso: string): string | null {
 }
 
 /**
- * The line beside the button, or null when there is nothing to say (switched off, or an API that
- * sends no count yet). Part 11: the situation, then what to do.
+ * The line beside the button: only why reading stopped (used up, or paused until a date) - the
+ * button is then disabled, and a gated button says why. While there is room nothing is said: no
+ * "80% of your AI allowance left" or "7 of 10 left" (the user, 2026-11-26). Part 11: the
+ * situation, then what to do.
  */
 export function allowanceText(status: ReaderStatus | null | undefined): string | null {
-  if (!status?.enabled) return null;
-  if (status.blocked) {
-    const until = status.resumes_at ? shortDate(status.resumes_at) : null;
-    if (until) return `AI reading is paused until ${until}. Fill in the details yourself for now.`;
-    return "Your company has used its AI allowance. Fill in the details yourself.";
-  }
-  if (typeof status.percent_left === "number") {
-    return `${status.percent_left}% of your AI allowance left`;
-  }
-  if (typeof status.reads_left === "number" && typeof status.reads_limit === "number") {
-    return `${status.reads_left} of ${status.reads_limit} left`;
-  }
-  return null;
+  if (!status?.enabled || !status.blocked) return null;
+  const until = status.resumes_at ? shortDate(status.resumes_at) : null;
+  if (until) return `AI reading is paused until ${until}. Fill in the details yourself for now.`;
+  return "Your company has used its AI allowance. Fill in the details yourself.";
 }
 
 /**
- * The allowance line, beside the button. Its id goes in the button's aria-describedby, so a
- * screen reader hears the count (and, when the button is disabled, the reason) with it.
+ * The reason beside a disabled read button (nothing while reading is open). Its id goes in the
+ * button's aria-describedby, so a screen reader hears the reason with it.
  */
 export function AllowanceNote({
   id,

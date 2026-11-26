@@ -6,4 +6,5 @@ export * from "./allowance";
 export * from "./core";
 export * from "./pieces";
 export * from "./quality";
+export * from "./readingCat";
 export { useDocumentReader, type DocumentReaderOptions } from "./useDocumentReader";

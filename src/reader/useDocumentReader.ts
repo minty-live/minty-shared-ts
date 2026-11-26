@@ -6,25 +6,32 @@
  * longer there is dropped (a token). `post` is the app's own call to its extract route, so its
  * auth and base URL stay the app's.
  *
- * `failed` is the one quiet failure line's switch (owner, 2026-11-04): set when a started read
- * comes back with nothing for the person - a failure reason, a cut connection, a refusal, or an
- * answer the form says showed nothing (`onSuggestions` returning false). Never for an abort, and
- * never when the reader is switched off (the latch then keeps it out of the way for the session).
+ * `failure` says why a started read came back with nothing for the person (the user, 2026-11-26;
+ * before, one quiet line for every case and silence when the reader was off) - `readFailureOf`'s
+ * kinds, plus `unreadable` for a cut connection or an answer the form says showed nothing
+ * (`onSuggestions` returning false). Never for an abort or a refusal. `failed` is `failure !== null`.
+ * `retry` reads the same document again, at most `MAX_READ_RETRIES` times and only for a failure a
+ * second try can mend; `dismiss` puts the message away ("Fill in manually").
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { readerStatusOf, type ReaderStatus } from "./allowance";
 import {
+  MAX_READ_RETRIES,
+  RETRYABLE_FAILURES,
   documentWarningOf,
   evidenceRefusalOf,
-  failureOf,
+  readFailureOf,
   readingCopy,
   suggestionsOf,
   type DocumentWarning,
   type EvidenceRefusal,
+  type ReadFailure,
   type ReaderLatch,
 } from "./core";
+
+const UNREADABLE: ReadFailure = { kind: "unreadable", maxFileMb: null };
 
 export type DocumentReaderOptions<S> = {
   /** Sends the form (the reading copy under `field`, with the document's own name) and returns the JSON answer. */
@@ -65,16 +72,20 @@ export function useDocumentReader<S>({
 }: DocumentReaderOptions<S>) {
   const token = useRef(0);
   const controller = useRef<AbortController | null>(null);
+  const [lastFile, setLastFile] = useState<File | null>(null);
   const [reading, setReading] = useState(false);
-  const [failed, setFailed] = useState(false);
+  const [failure, setFailure] = useState<ReadFailure | null>(null);
+  const [retries, setRetries] = useState(0);
 
   const cancel = useCallback(() => {
     token.current += 1;
     controller.current?.abort();
     controller.current = null;
     setReading(false);
-    setFailed(false);
+    setFailure(null);
   }, []);
+
+  const dismiss = useCallback(() => setFailure(null), []);
 
   // Unmounting drops whatever is in flight.
   useEffect(
@@ -85,7 +96,27 @@ export function useDocumentReader<S>({
     [],
   );
 
+  /** A new read of `file`: the person's tries start again. */
   async function read(file: File) {
+    setLastFile(file);
+    setRetries(0);
+    await run(file);
+  }
+
+  const canRetry =
+    failure !== null &&
+    RETRYABLE_FAILURES.includes(failure.kind) &&
+    retries < MAX_READ_RETRIES &&
+    lastFile !== null;
+
+  /** Try again: the same document, counted against `MAX_READ_RETRIES`. */
+  async function retry() {
+    if (!canRetry || !lastFile) return;
+    setRetries((n) => n + 1);
+    await run(lastFile);
+  }
+
+  async function run(file: File) {
     cancel();
     if (latch.readerOff()) return;
     const mine = token.current;
@@ -103,22 +134,21 @@ export function useDocumentReader<S>({
       const status = readerStatusOf(answer);
       if (status) onStatus?.(status);
       if (mine !== token.current) return;
-      if (latch.readerOff()) return;
       const suggestions = suggestionsOf<S>(answer);
       onWarning?.(documentWarningOf(answer));
       const refusal = evidenceRefusalOf(answer);
       if (refusal) onRefused?.(refusal);
       else if (suggestions) {
-        if (onSuggestions(suggestions) === false) setFailed(true);
-      } else if (failureOf(answer)) setFailed(true);
+        if (onSuggestions(suggestions) === false) setFailure(UNREADABLE);
+      } else setFailure(readFailureOf(answer));
     } catch (error) {
-      // An abort is the person moving on - nothing to say. Anything else is the quiet line.
+      // An abort is the person moving on - nothing to say. Anything else could not be read.
       if (
         mine === token.current &&
         !abort.signal.aborted &&
         (error as Error)?.name !== "AbortError"
       )
-        setFailed(true);
+        setFailure(UNREADABLE);
     } finally {
       if (mine === token.current) {
         controller.current = null;
@@ -127,5 +157,15 @@ export function useDocumentReader<S>({
     }
   }
 
-  return { reading, failed, read, cancel };
+  return {
+    reading,
+    failed: failure !== null,
+    failure,
+    canRetry,
+    retriesLeft: MAX_READ_RETRIES - retries,
+    read,
+    retry,
+    dismiss,
+    cancel,
+  };
 }
