@@ -3,12 +3,13 @@
 // tested in the app (minty-petty-cash-web lib/expenseAi.ts, minty-payment-request-web
 // lib/invoiceReader.ts).
 
-import { act, render, renderHook, screen } from "@testing-library/react";
+import { act, render, renderHook, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   AI_CAUTION,
+  BETA_LABEL,
   AiCaution,
   convertedText,
   documentWarningOf,
@@ -542,6 +543,29 @@ describe("an amount converted from another currency", () => {
     );
     // the saved line keeps the rate at full precision
     expect(exchangeFields(PHP).exchange_rate).toBe("0.13456");
+  });
+
+  it("marks the read button Beta: a blue pill beside the label, the button's name unchanged (the user, 2026-11-26)", () => {
+    render(<ReadButton label="Read receipt" onClick={() => {}} />);
+    const button = screen.getByRole("button", { name: "Read receipt" });
+    const pill = within(button).getByText(BETA_LABEL);
+    expect(BETA_LABEL).toBe("Beta");
+    expect(pill).toHaveClass(
+      "bg-status-info-bg",
+      "text-status-info-ink",
+      "rounded-full",
+      "text-xs",
+    );
+    expect(pill).toHaveAttribute("aria-hidden", "true");
+  });
+
+  it("marks the caution Beta beside the sentence, the sentence still the description (the user, 2026-11-26)", () => {
+    render(<AiCaution id="c" />);
+    const pill = screen.getByText(BETA_LABEL);
+    expect(pill).toHaveClass("bg-status-info-bg", "text-status-info-ink");
+    expect(pill).not.toHaveAttribute("aria-hidden");
+    expect(pill.closest("div")).toContainElement(document.getElementById("c"));
+    expect(document.getElementById("c")).not.toContainElement(pill);
   });
 
   it("the caution is one sentence, the same for a receipt, an invoice and a converted amount", () => {

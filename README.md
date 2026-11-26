@@ -241,6 +241,11 @@ suggestions (owner, 2026-11-04) - Petty Cash's Add New Expense and Payment Reque
   `exchangeFailedOf` (the API's `exchange` / `exchange_failed`), `exchangeKept` (the field still
   holds the converted figure), `exchangeFields` (the six details by the saved line's column names),
   `convertedText(exchange, code)` ("converted from USD 12.34 at 1 USD = 7.85 HKD (13 Nov 2026 rate)", plus ", the last business day before 15 Nov 2026" when a weekend or holiday moved the rate's day - the API's `asked_date`; the source stays on the line, not named to the person).
+- v0.40 (the user, 2026-11-26): AI reading is Beta. `ReadButton` carries a blue Info pill
+  (`BETA_LABEL`, the status pill's `TONE_CLASS.info`) after its label, `aria-hidden` so the
+  button's name stays the label, and dimmed when the button is disabled; `AiCaution` shows the
+  same pill before its sentence, outside the sentence's id, so the save buttons' description is
+  still the sentence alone.
 - v0.31 (owner's launch decisions, 2026-11-23, after IRD's "A Guide to Keeping Business
   Records"): a document that is not one record of a payment. `EVIDENCE_REASONS` /
   `evidenceRefusalOf(answer)` (`several_documents` only since v0.38 - `no_description` is gone;

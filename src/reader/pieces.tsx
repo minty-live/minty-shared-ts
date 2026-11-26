@@ -7,7 +7,25 @@
  * text, never as markup.
  */
 
+import { TONE_CLASS } from "../ui/statusTone";
 import { outlineOf, type ReaderState } from "./core";
+
+/**
+ * AI reading is Beta (the user, 2026-11-26): a small Info pill (the status pill's blue) on the
+ * read button and on the caution. Text, never colour alone.
+ */
+export const BETA_LABEL = "Beta";
+
+function BetaPill({ hidden = false, className = "" }: { hidden?: boolean; className?: string }) {
+  return (
+    <span
+      aria-hidden={hidden || undefined}
+      className={`inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-xs font-semibold leading-4 whitespace-nowrap ${TONE_CLASS.info}${className ? ` ${className}` : ""}`}
+    >
+      {BETA_LABEL}
+    </span>
+  );
+}
 
 /** The ring on a field holding an untouched suggestion (Flask's teal ring, in the Part 13 selected border). */
 export const SUGGESTED_RING = "ring-2 ring-border-selected ring-offset-1";
@@ -63,7 +81,8 @@ export function ReadingNotice({ title, detail }: { title: string; detail: string
 /**
  * The press that starts a read (owner, 2026-11-18): a document is never read on attaching it, only
  * when the person asks. Secondary, never the form's primary action (Brand is never a fill): white,
- * the reader's teal border and label, radius 12, 44px tall. `type="button"` - it never submits.
+ * the reader's teal border and label, radius 12, 44px tall, with the Beta pill after the label
+ * (the user, 2026-11-26). `type="button"` - it never submits.
  */
 export function ReadButton({
   label,
@@ -84,12 +103,14 @@ export function ReadButton({
       onClick={onClick}
       disabled={disabled}
       aria-describedby={describedBy}
-      className="mb-1 mt-3 inline-flex min-h-11 max-w-full cursor-pointer items-center gap-2 rounded-[12px] border border-action-secondary-border bg-surface-card px-4 py-2 text-left text-sm font-semibold text-action-secondary-text hover:bg-state-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus disabled:cursor-not-allowed disabled:border-border-default disabled:bg-action-disabled disabled:text-text-disabled disabled:hover:bg-action-disabled"
+      className="group mb-1 mt-3 inline-flex min-h-11 max-w-full cursor-pointer items-center gap-2 rounded-[12px] border border-action-secondary-border bg-surface-card px-4 py-2 text-left text-sm font-semibold text-action-secondary-text hover:bg-state-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus disabled:cursor-not-allowed disabled:border-border-default disabled:bg-action-disabled disabled:text-text-disabled disabled:hover:bg-action-disabled"
     >
       <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
         <path d="M12 2l2.4 6.2L21 10l-6.6 1.8L12 18l-2.4-6.2L3 10l6.6-1.8L12 2z" />
       </svg>
       <span className="min-w-0 break-words">{label}</span>
+      {/* hidden from the button's name, which stays the label; the caution reads "Beta" */}
+      <BetaPill hidden className="group-disabled:opacity-60" />
     </button>
   );
 }
@@ -182,15 +203,20 @@ export function ReadFailedLine({ text }: { text: string }) {
  * The owner's caution, in both apps (Petty Cash expense, Payment Request bill): under the fields
  * once a read has filled any, until the line is saved. One sentence since 2026-11-23 (owner) - the
  * "check every field" and exchange-rate sentences are gone. In the warning amber (the user,
- * 2026-11-23), but not an alert; the form puts its id in the save button's aria-describedby so it
- * is read there.
+ * 2026-11-23), but not an alert, with the Beta pill before it (the user, 2026-11-26); the form
+ * puts its id in the save button's aria-describedby so it is read there.
  */
 export const AI_CAUTION = "AI suggestions may be inaccurate.";
 
 export function AiCaution({ id }: { id: string }) {
+  // The Beta pill sits beside the sentence, outside its id, so the form's description stays the sentence.
   return (
-    <p id={id} className="mb-1 mt-3 break-words text-sm text-status-warning-ink">
-      {AI_CAUTION}
-    </p>
+    // Inline, so on a phone the sentence wraps beside the pill rather than under it.
+    <div className="mb-1 mt-3 break-words text-sm">
+      <BetaPill className="mr-2 align-[1px]" />
+      <span id={id} className="text-sm text-status-warning-ink">
+        {AI_CAUTION}
+      </span>
+    </div>
   );
 }
