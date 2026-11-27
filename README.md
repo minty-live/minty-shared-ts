@@ -206,6 +206,14 @@ under the same contract as `SIDEBAR_ASSETS`.
 
 minty-payment-request-web still renders its own copies; it moves to these in its own task.
 
+v0.42: `HeaderBack` and `HeaderCompany` - the two pieces every app's header bar draws (the user,
+2026-11-27: "apps must be consistent"). `HeaderBack` is "‹ Back": grey, and on hover the arrow and
+the word turn teal together with only the word underlined; a `BackLink` with `href`, a plain link
+with `direct`, a button with only `onClick`. `HeaderCompany` is the building and the company's
+name, truncating first. Both glyphs are inline SVG (Rounded 400), because the apps load different
+icon fonts. Used by minty-web's `AppHeader`, minty-payment-request-web's `Header` and
+minty-petty-cash-web's `PhoneCard`.
+
 v0.13: `ErrorSummary` takes `look="classic"` for every app's `main`/`development` (v0.23: the same
 danger colours as `v2`, with the classic radius); `v2` stays the default.
 

@@ -13,6 +13,7 @@ export { EmptyState } from "./EmptyState";
 export { ErrorSummary } from "./ErrorSummary";
 export { Field, inputClass } from "./Field";
 export { FilterChip } from "./FilterChip";
+export { HEADER_BACK_CLASS, HeaderBack, HeaderCompany } from "./HeaderParts";
 export { Icon } from "./Icon";
 export { DraftRestore } from "./DraftRestore";
 export { InlineAlert, PageBanner } from "./InlineAlert";
